@@ -1,0 +1,23 @@
+version: '2'
+services:
+  testgardenspark:
+    restart: always
+    image: serdmanczyk/gardensparkdev
+    build: 
+      context: .
+      dockerfile: ./run.Dockerfile
+    entrypoint: go test ./... -tags=integration
+    links:
+      - testgspkpostgres
+    depends_on:
+      - testgspkpostgres
+    ports:
+      - "8080:8080"
+  testgspkpostgres:
+    restart: always
+    build: 
+      context: ./postgres/
+    image: serdmanczyk/testgspkpostgres
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword

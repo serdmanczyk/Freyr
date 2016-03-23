@@ -1,0 +1,21 @@
+version: '2'
+services:
+  gardenspark:
+    restart: always
+    image: serdmanczyk/gardenspark
+    build: 
+      context: .
+      dockerfile: ./static.Dockerfile
+    env_file: .env
+    links:
+      - gspkpostgres
+    depends_on:
+      - gspkpostgres
+    ports:
+      - "8080:8080"
+  gspkpostgres:
+    restart: always
+    build: 
+      context: ./postgres/
+    image: serdmanczyk/gspkpostgres
+    env_file: ./postgres/.env

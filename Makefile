@@ -17,3 +17,7 @@ buildstatic:
 integrationtest:
 	docker-compose -f docker-compose.test.yml -p ci build
 	docker-compose -f docker-compose.test.yml -p ci up
+
+rundev:
+	docker-compose -f docker-compose.debug.yml -p dev build
+	docker-compose -f docker-compose.debug.yml -p dev up

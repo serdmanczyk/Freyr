@@ -6,6 +6,7 @@ import (
 	"github.com/serdmanczyk/gardenspark/token"
 	"golang.org/x/oauth2"
 	"net/http"
+	"reflect"
 	"time"
 )
 
@@ -26,17 +27,7 @@ type OauthHandler interface {
 }
 
 func checkOauthClaim(claims map[string]interface{}) bool {
-	if len(claims) != 1 {
-		return false
-	}
-
-	loginClaim, ok := claims["oauthlogin"]
-	if !ok {
-		return false
-	}
-
-	oauthLogin, ok := loginClaim.(bool)
-	if !ok || !oauthLogin {
+	if !reflect.DeepEqual(claims, oauthClaim) {
 		return false
 	}
 

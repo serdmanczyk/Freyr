@@ -26,7 +26,9 @@ type JtwTokenGen struct {
 func (t JtwTokenGen) GenerateToken(exp time.Time, claims Claims) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 
-	token.Claims = claims
+	for k, v := range claims {
+		token.Claims[k] = v
+	}
 	token.Claims["exp"] = exp.Format(time.RFC3339)
 
 	return token.SignedString(t.Key)

@@ -1,6 +1,15 @@
 version: '2'
 services:
-  gardensparkdev:
+  nginx:
+    image: gspknginx
+    build: 
+      context: ./nginx/
+    ports:
+      - "8080:80"
+      - "8443:443"
+    links:
+      - gardenspark
+  gardenspark:
     restart: always
     image: serdmanczyk/gardensparkdev
     build: 
@@ -11,8 +20,6 @@ services:
       - gspkpostgres
     depends_on:
       - gspkpostgres
-    ports:
-      - "8080:8080"
   gspkpostgres:
     restart: always
     build: 

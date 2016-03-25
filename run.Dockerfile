@@ -12,5 +12,4 @@ RUN go get github.com/lib/pq
 COPY ./ /go/src/github.com/serdmanczyk/gardenspark/
 WORKDIR /go/src/github.com/serdmanczyk/gardenspark/
 
-EXPOSE 8080
 ENTRYPOINT ["go", "run", "main.go"]

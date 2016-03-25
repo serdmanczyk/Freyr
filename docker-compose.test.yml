@@ -11,10 +11,7 @@ services:
       - testgspkpostgres
     depends_on:
       - testgspkpostgres
-    ports:
-      - "8080:8080"
   testgspkpostgres:
-    restart: always
     build: 
       context: ./postgres/
     image: serdmanczyk/testgspkpostgres

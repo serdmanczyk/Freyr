@@ -22,7 +22,7 @@ func NewGoogleOauth(clientId, clientSecret, domain string) *GoogleOauth {
 			ClientID:     clientId,
 			ClientSecret: clientSecret,
 			Endpoint:     google.Endpoint,
-			RedirectURL:  "http://" + domain + ":8080/oauth2callback",
+			RedirectURL:  "https://" + domain + "/api/oauth2callback",
 			Scopes: []string{
 				user_info_scope,
 			},

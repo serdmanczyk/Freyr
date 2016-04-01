@@ -2,11 +2,12 @@ version: '2'
 services:
   testgardenspark:
     restart: always
-    image: serdmanczyk/gardensparkdev
-    build: 
-      context: .
-      dockerfile: ./run.Dockerfile
-    entrypoint: go test ./... -tags=integration
+    image: golang
+    volumes:
+      - $GOPATH/src/:/go/src/
+      - ./:/go/src/github.com/serdmanczyk/gardenspark/
+    working_dir: /go/src/github.com/serdmanczyk/gardenspark/
+    command: go test ./... -tags=integration
     links:
       - testgspkpostgres
     depends_on:

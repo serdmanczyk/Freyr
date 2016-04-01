@@ -1,9 +1,10 @@
 version: '2'
 services:
   nginx:
-    image: gspknginx
-    build: 
-      context: ./nginx/
+    image: nginx:alpine
+    volumes:
+      - ./nginx/conf:/etc/nginx/
+      - ./nginx/static:/usr/share/nginx/html
     ports:
       - "8080:80"
       - "8443:443"
@@ -11,18 +12,18 @@ services:
       - gardenspark
   gardenspark:
     restart: always
-    image: serdmanczyk/gardensparkdev
-    build: 
-      context: .
-      dockerfile: ./run.Dockerfile
+    image: golang
+    volumes:
+      - $GOPATH/src/:/go/src/
+      - ./:/go/src/github.com/serdmanczyk/gardenspark/
+    working_dir: /go/src/github.com/serdmanczyk/gardenspark/
+    command: go run main.go
     env_file: .env
     links:
       - gspkpostgres
-    depends_on:
-      - gspkpostgres
   gspkpostgres:
     restart: always
-    build: 
-      context: ./postgres/
-    image: serdmanczyk/gspkpostgres
+    image: postgres:9.4
+    volumes:
+      - ./postgres/:/docker-entrypoint-initdb.d/
     env_file: ./postgres/.env

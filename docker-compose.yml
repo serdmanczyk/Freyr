@@ -14,7 +14,6 @@ services:
     image: serdmanczyk/gardenspark
     build: 
       context: .
-      dockerfile: ./static.Dockerfile
     env_file: .env
     links:
       - gspkpostgres

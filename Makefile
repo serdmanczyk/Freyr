@@ -1,23 +1,22 @@
-default: buildbinary copybinary buildstatic
+default: build
 
-buildgo:
-	CGO_ENABLED=0 GOOS=linux go build -ldflags "-s" -a -installsuffix cgo -o gardenspark ./
+pwd := $(shell pwd)
 
-buildbinary:
-	docker build -t serdmanczyk/gobuild -f ./build.Dockerfile .
+build:
+	docker run \
+		-e CGO_ENABLED=0 \
+		-e GOOS=linux \
+		-v $(GOPATH)/src/:/go/src/ \
+		-v $(pwd):/go/src/github.com/serdmanczyk/gardenspark/ \
+		-w /go/src/github.com/serdmanczyk/gardenspark/ \
+		golang go build -ldflags "-s" -a -installsuffix cgo -o gardenspark
 
-copybinary:
-	docker run -d serdmanczyk/gobuild /bin/true
-	docker cp $(shell docker ps -q -n=1):/go/src/github.com/serdmanczyk/gardenspark/gardenspark .
-	chmod 755 ./gardenspark
-
-buildstatic:
-	docker build --rm -t serdmanczyk/gardenspark -f static.Dockerfile .
-
-integrationtest:
-	docker-compose -f docker-compose.test.yml -p ci build
+test:
 	docker-compose -f docker-compose.test.yml -p ci up
 
 rundev:
-	docker-compose -f docker-compose.debug.yml -p dev build
 	docker-compose -f docker-compose.debug.yml -p dev up
+
+runstatic:
+	docker-compose build
+	docker-compose up

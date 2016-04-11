@@ -55,7 +55,7 @@ func (f *fakeOauth) GetUserData(tok *oauth2.Token) (*models.User, error) {
 
 func TestHandleThreeLegged(t *testing.T) {
 	oauth := &fakeOauth{}
-	tokensource := token.JtwTokenGen{[]byte(testKey)}
+	tokensource := token.JtwTokenGen(testKey)
 
 	authorizeRequest, err := http.NewRequest("GET", "/authorize", nil)
 	if err != nil {
@@ -149,7 +149,7 @@ func TestHandleThreeLegged(t *testing.T) {
 
 func TestRejectToken(t *testing.T) {
 	oauth := &fakeOauth{}
-	tokensource := token.JtwTokenGen{[]byte(testKey)}
+	tokensource := token.JtwTokenGen(testKey)
 
 	callbackUrl := "/oauth2callback?state=shutyomouth&code=jibbajabba"
 	callbackRequest, err := http.NewRequest("GET", callbackUrl, nil)
@@ -169,7 +169,7 @@ func TestRejectToken(t *testing.T) {
 
 func TestExpiredToken(t *testing.T) {
 	oauth := &fakeOauth{}
-	tokensource := token.JtwTokenGen{[]byte(testKey)}
+	tokensource := token.JtwTokenGen(testKey)
 
 	claims := map[string]interface{}{}
 	expiredToken, err := tokensource.GenerateToken(time.Now().Add(time.Second*-1), claims)
@@ -199,7 +199,7 @@ func TestExpiredToken(t *testing.T) {
 
 func TestInvalidClaims(t *testing.T) {
 	oauth := &fakeOauth{}
-	tokensource := token.JtwTokenGen{[]byte(testKey)}
+	tokensource := token.JtwTokenGen(testKey)
 
 	claims := map[string]interface{}{
 		"wacko": "blammo",

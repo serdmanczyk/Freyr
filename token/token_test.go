@@ -13,7 +13,7 @@ var (
 )
 
 func TestTokenGen(t *testing.T) {
-	tkgen := JtwTokenGen{[]byte(testKey)}
+	tkgen := JtwTokenGen(testKey)
 	expiry := time.Now().Add(time.Minute)
 
 	clams := Claims{"cheese": "swiss"}
@@ -38,7 +38,7 @@ func TestTokenGen(t *testing.T) {
 }
 
 func TestTokenExpiration(t *testing.T) {
-	tkgen := JtwTokenGen{[]byte(testKey)}
+	tkgen := JtwTokenGen(testKey)
 	expiry := time.Now().Add(-time.Minute)
 	signedToken, err := tkgen.GenerateToken(expiry, Claims{})
 	if err != nil {
@@ -52,14 +52,14 @@ func TestTokenExpiration(t *testing.T) {
 }
 
 func TestKeyFailure(t *testing.T) {
-	tkgen := JtwTokenGen{[]byte(testKey)}
+	tkgen := JtwTokenGen(testKey)
 	expiry := time.Now().Add(time.Minute)
 	signedToken, err := tkgen.GenerateToken(expiry, Claims{})
 	if err != nil {
 		t.Fatalf("Failure generating token: %v", err)
 	}
 
-	otherTkgen := JtwTokenGen{[]byte(badKey)}
+	otherTkgen := JtwTokenGen(badKey)
 
 	_, err = otherTkgen.ValidateToken(signedToken)
 	if err == nil || err.Error() != jwt.ErrSignatureInvalid.Error() {
@@ -75,7 +75,7 @@ func TestWrongAlgorithm(t *testing.T) {
 		t.Fatalf("Failure generating token: %v", err)
 	}
 
-	tkgen := JtwTokenGen{[]byte(testKey)}
+	tkgen := JtwTokenGen(testKey)
 
 	_, err = tkgen.ValidateToken(signedToken)
 	if err == nil || err.Error() != InvalidAlgorithm.Error() {

@@ -19,9 +19,7 @@ type TokenSource interface {
 	ValidateToken(string) (Claims, error)
 }
 
-type JtwTokenGen struct {
-	Key []byte
-}
+type JtwTokenGen []byte
 
 func (t JtwTokenGen) GenerateToken(exp time.Time, claims Claims) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -31,7 +29,7 @@ func (t JtwTokenGen) GenerateToken(exp time.Time, claims Claims) (string, error)
 	}
 	token.Claims["exp"] = exp.Format(time.RFC3339)
 
-	return token.SignedString(t.Key)
+	return token.SignedString([]byte(t))
 }
 
 func (t JtwTokenGen) ValidateToken(tokenString string) (Claims, error) {
@@ -40,7 +38,7 @@ func (t JtwTokenGen) ValidateToken(tokenString string) (Claims, error) {
 			return nil, InvalidAlgorithm
 		}
 
-		return []byte(t.Key), nil
+		return []byte(t), nil
 	})
 	if err != nil {
 		return nil, err

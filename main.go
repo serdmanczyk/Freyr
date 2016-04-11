@@ -38,7 +38,7 @@ func main() {
 	}
 
 	googleOauth := oauth.NewGoogleOauth(c.OauthClientId, c.OauthClientSecret, c.Domain)
-	tokenSource := token.JtwTokenGen{Key: []byte(c.SecretKey)}
+	tokenSource := token.JtwTokenGen(c.SecretKey)
 	dbConn, err := database.DbConn(c.DBHost, c.DBUser, c.DBPassword)
 	if err != nil {
 		log.Fatalf("Error initializing database conn: %s", err)

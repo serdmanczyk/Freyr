@@ -31,7 +31,7 @@ func happyHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func TestAuthorized(t *testing.T) {
-	tokGen := token.JtwTokenGen{[]byte(testKey)}
+	tokGen := token.JtwTokenGen(testKey)
 
 	handler := apollo.New(Authorized(tokGen)).ThenFunc(happyHandler)
 
@@ -65,7 +65,7 @@ func TestAuthorized(t *testing.T) {
 }
 
 func TestNotAuthorized(t *testing.T) {
-	tokGen := token.JtwTokenGen{[]byte(testKey)}
+	tokGen := token.JtwTokenGen(testKey)
 
 	handler := apollo.New(Authorized(tokGen)).ThenFunc(happyHandler)
 

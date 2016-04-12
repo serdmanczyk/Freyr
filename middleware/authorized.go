@@ -11,7 +11,6 @@ import (
 
 var (
 	CookieNotFound = errors.New("Token cookie not found")
-	InvalidToken   = errors.New("Invalid token")
 )
 
 func checkCookie(r *http.Request) (string, error) {

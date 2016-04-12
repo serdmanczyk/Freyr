@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	UserAlreadyExists = errors.New("Row already exists for entry in database")
+	UserAlreadyExists = errors.New("Entry already exists for user")
 )
 
 type UserStore interface {

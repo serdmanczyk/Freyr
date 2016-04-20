@@ -5,19 +5,23 @@ import (
 	"github.com/serdmanczyk/gardenspark/models"
 )
 
-func (db GspkDb) GetUserSecret(userEmail string) (models.Secret, error) {
-	var secret string
+func (db GspkDb) GetSecret(userEmail string) (secret models.Secret, err error) {
+	var secretString string
 
-	err := db.QueryRow("select secret from users where email = $1;", userEmail).Scan(&secret)
-	if err == sql.ErrNoRows || secret == "" {
-		return models.Secret(""), models.SecretDoesntExist
+	secret = models.Secret([]byte{})
+
+	err = db.QueryRow("select secret from users where email = $1;", userEmail).Scan(&secretString)
+	if err == sql.ErrNoRows || secretString == "" {
+		err = models.SecretDoesntExist
+		return
 	}
 
-	return models.Secret(secret), err
+	secret, err = models.SecretFromBase64(secretString)
+	return
 }
 
-func (db GspkDb) SetUserSecret(userEmail string, secret models.Secret) error {
-	_, err := db.Exec("update users set secret = $1 where email = $2;", string(secret), userEmail)
+func (db GspkDb) StoreSecret(userEmail string, secret models.Secret) error {
+	_, err := db.Exec("update users set secret = $1 where email = $2;", secret.Encode(), userEmail)
 
 	return err
 }

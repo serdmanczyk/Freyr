@@ -1,65 +1,183 @@
 package middleware
 
 import (
-	"errors"
 	"github.com/cyclopsci/apollo"
+	"github.com/serdmanczyk/gardenspark/models"
 	"github.com/serdmanczyk/gardenspark/oauth"
 	"github.com/serdmanczyk/gardenspark/token"
 	"golang.org/x/net/context"
 	"net/http"
+	"strconv"
+	"time"
 )
 
-var (
-	CookieNotFound = errors.New("Token cookie not found")
+const (
+	apiAuthTypeValue    = "API"
+	deviceAuthTypeValue = "DEVICE"
+	authTypeHeader      = "X-GSPK-AUTHTYPE"
+	tokenHeader         = "X-GSPK-TOKEN"
+	authUserHeader      = "X-GSPK-USER"
+	apiAuthDateHeader   = "X-GSPK-DATETIME"
+	apiSignatureHeader  = "X-GSPK-SIGNATURE"
 )
 
-func checkCookie(r *http.Request) (string, error) {
-	cookie, err := r.Cookie(oauth.CookieName)
-	if err != nil {
-		return "", CookieNotFound
-	}
-
-	return cookie.Value, nil
+type Authorizer interface {
+	Authorize(ctx context.Context, r *http.Request) context.Context
 }
 
-// TODO: implement auth header for API use
-func checkAuthHeader(r *http.Request) (string, error) {
-	return "", errors.New("not yet implemented")
-}
-
-func getEmail(claims map[string]interface{}) string {
-	email := claims["email"]
-	emailString, _ := email.(string)
-	return emailString
-}
-
-func Authorized(t token.TokenSource) apollo.Constructor {
+func Authorize(auths ...Authorizer) apollo.Constructor {
 	return apollo.Constructor(func(next apollo.Handler) apollo.Handler {
 		return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			tokenString, err := checkCookie(r)
-			// if err == CookieNotFound {
-			// 	tokenString, err = checkAuthHeader(r)
-			// }
-
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusForbidden)
-				return
+			for _, auth := range auths {
+				authCtx := auth.Authorize(ctx, r)
+				if authCtx != nil {
+					next.ServeHTTP(authCtx, w, r)
+					return
+				}
 			}
 
-			claims, err := t.ValidateToken(tokenString)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusForbidden)
-				return
-			}
-
-			email := getEmail(claims)
-			if email == "" {
-				http.Error(w, err.Error(), http.StatusForbidden)
-				return
-			}
-
-			userCtx := context.WithValue(ctx, "email", email)
-			next.ServeHTTP(userCtx, w, r)
+			http.Error(w, "Request not authorized", http.StatusUnauthorized)
 		})
 	})
+}
+
+type UserAuthorizer struct {
+	tokenStore token.JtwTokenGen
+}
+
+func NewUserAuthorizer(tS token.JtwTokenGen) *UserAuthorizer {
+	return &UserAuthorizer{tokenStore: tS}
+}
+
+func (u *UserAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
+	cookie, err := r.Cookie(oauth.CookieName)
+	if err != nil {
+		return nil
+	}
+
+	claims, err := u.tokenStore.ValidateToken(cookie.Value)
+	if err != nil {
+		return nil
+	}
+
+	userEmail, ok := claims["email"].(string)
+	if !ok {
+		return nil
+	}
+
+	return context.WithValue(ctx, "email", userEmail)
+}
+
+type ApiAuthorizer struct {
+	secretStore models.SecretStore
+}
+
+func NewApiAuthorizer(ss models.SecretStore) *ApiAuthorizer {
+	return &ApiAuthorizer{secretStore: ss}
+}
+
+func (a *ApiAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
+	authType := r.Header.Get(authTypeHeader)
+	if authType != apiAuthTypeValue {
+		return nil
+	}
+
+	signature := r.Header.Get(apiSignatureHeader)
+	if signature == "" {
+		return nil
+	}
+
+	userEmail, signingString := apiSigningString(r)
+	if userEmail == "" {
+		return nil
+	}
+
+	userSecret, err := a.secretStore.GetSecret(userEmail)
+	if err != nil {
+		return nil
+	}
+
+	if !userSecret.Verify(signingString, signature) {
+		return nil
+	}
+
+	return context.WithValue(ctx, "email", userEmail)
+}
+
+func apiSigningString(r *http.Request) (userEmail string, signinString string) {
+	datetime := r.Header.Get(apiAuthDateHeader)
+	user := r.Header.Get(authUserHeader)
+
+	if datetime == "" || user == "" {
+		return
+	}
+
+	timeInt, err := strconv.ParseInt(datetime, 10, 64)
+	if err != nil {
+		return
+	}
+
+	if timeInt < time.Now().Add(time.Second*-5).Unix() || timeInt > time.Now().Add(time.Second*5).Unix() {
+		return
+	}
+	// TODO: Add support for POST (include content-length)
+
+	userEmail, signinString = user, r.Method+r.URL.RawPath+datetime+user
+	return
+}
+
+type DeviceAuthorizer struct {
+	secretStore models.SecretStore
+}
+
+func NewDeviceAuthorizer(ss models.SecretStore) *DeviceAuthorizer {
+	return &DeviceAuthorizer{secretStore: ss}
+}
+
+func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
+	authType := r.Header.Get(authTypeHeader)
+	if authType != deviceAuthTypeValue {
+		return nil
+	}
+
+	jwtTokenString := r.Header.Get(tokenHeader)
+	if jwtTokenString == "" {
+		return nil
+	}
+
+	requestUserEmail := r.Header.Get(authUserHeader)
+	if requestUserEmail == "" {
+		return nil
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		return nil
+	}
+
+	requestCoreId := r.PostFormValue("coreid")
+	if jwtTokenString == "" {
+		return nil
+	}
+
+	claims, err := token.ValidateUserToken(d.secretStore, jwtTokenString)
+	if err != nil {
+		return nil
+	}
+
+	tokenCoreId, ok := claims["coreid"].(string)
+	if !ok {
+		return nil
+	}
+
+	tokenUserEmail, ok := claims["email"].(string)
+	if !ok {
+		return nil
+	}
+
+	if tokenCoreId != requestCoreId || tokenUserEmail != requestUserEmail {
+		return nil
+	}
+
+	return context.WithValue(ctx, "email", requestUserEmail)
 }

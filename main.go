@@ -8,9 +8,8 @@ import (
 	"github.com/serdmanczyk/gardenspark/envflags"
 	"github.com/serdmanczyk/gardenspark/middleware"
 	"github.com/serdmanczyk/gardenspark/oauth"
+	"github.com/serdmanczyk/gardenspark/routes"
 	"github.com/serdmanczyk/gardenspark/token"
-	"golang.org/x/net/context"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -44,14 +43,16 @@ func main() {
 		log.Fatalf("Error initializing database conn: %s", err)
 	}
 
-	authed := apollo.New(middleware.Authorized(tokenSource))
+	userAuth := middleware.NewUserAuthorizer(tokenSource)
+	userAuthed := apollo.New(middleware.Authorize(userAuth))
+
+	apiAuth := middleware.NewUserAuthorizer(tokenSource)
+	apiAuthed := apollo.New(middleware.Authorize(apiAuth))
 
 	mux := http.NewServeMux()
-	mux.Handle("/", authed.ThenFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		email, _ := ctx.Value("email").(string)
-		io.WriteString(w, "hey there: "+email)
-		return
-	}))
+	mux.Handle("/", userAuthed.Then(routes.Hello()))
+	mux.Handle("/secret", userAuthed.Then(routes.GenerateToken(dbConn)))
+	mux.Handle("/rotate_secret", apiAuthed.Then(routes.GenerateToken(dbConn)))
 	mux.Handle("/authorize", oauth.HandleAuthorize(googleOauth, tokenSource))
 	mux.Handle("/oauth2callback", oauth.HandleOAuth2Callback(googleOauth, tokenSource, dbConn))
 

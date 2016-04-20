@@ -17,8 +17,8 @@ func TestGetSecretDoesntExist(t *testing.T) {
 		Locale:     "us",
 	}
 
-	_, err := gspkDb.GetUserSecret(testUser.Email)
-	if err != models.SecretDoesntExist {
+	_, err := gspkDb.GetSecret(testUser.Email)
+	if err.Error() != models.SecretDoesntExist.Error() {
 		t.Errorf("Unknown error retreiving secret for non-existent user: %s", err.Error())
 	}
 
@@ -27,7 +27,11 @@ func TestGetSecretDoesntExist(t *testing.T) {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
 
-	_, err = gspkDb.GetUserSecret(testUser.Email)
+	_, err = gspkDb.GetSecret(testUser.Email)
+	if err == nil {
+		t.Errorf("No error reported retreiving un-set secret for new user: should be %s", models.SecretDoesntExist.Error())
+	}
+
 	if err != models.SecretDoesntExist {
 		t.Errorf("Unknown error retreiving un-set secret for new user: %s", err.Error())
 	}
@@ -53,17 +57,17 @@ func TestSetGetSecret(t *testing.T) {
 		t.Errorf("Error generating new secret: %s", err.Error())
 	}
 
-	err = gspkDb.SetUserSecret(testUser.Email, secret)
+	err = gspkDb.StoreSecret(testUser.Email, secret)
 	if err != nil {
 		t.Errorf("Error setting secret: %s", err.Error())
 	}
 
-	dbSecret, err := gspkDb.GetUserSecret(testUser.Email)
+	dbSecret, err := gspkDb.GetSecret(testUser.Email)
 	if err != nil {
 		t.Errorf("Error getting secret: %s", err.Error())
 	}
 
-	if dbSecret != secret {
-		t.Errorf("Secret form database doesn't match; expected %s, got: %s", secret, dbSecret)
+	if dbSecret.Encode() != secret.Encode() {
+		t.Errorf("Secret from database doesn't match; expected %s, got: %s", secret, dbSecret)
 	}
 }

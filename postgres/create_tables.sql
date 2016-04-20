@@ -1,4 +1,4 @@
--- drop table if exists users, cores, readings;
+g-- drop table if exists users, cores, readings;
 
 create table if not exists users (
 	email text primary key,

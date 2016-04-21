@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 	"time"
 )
 

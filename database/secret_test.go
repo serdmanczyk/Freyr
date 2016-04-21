@@ -3,7 +3,7 @@
 package database
 
 import (
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 	"testing"
 )
 
@@ -17,17 +17,17 @@ func TestGetSecretDoesntExist(t *testing.T) {
 		Locale:     "us",
 	}
 
-	_, err := gspkDb.GetSecret(testUser.Email)
+	_, err := db.GetSecret(testUser.Email)
 	if err.Error() != models.SecretDoesntExist.Error() {
 		t.Errorf("Unknown error retreiving secret for non-existent user: %s", err.Error())
 	}
 
-	err = gspkDb.AddUser(testUser)
+	err = db.AddUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
 
-	_, err = gspkDb.GetSecret(testUser.Email)
+	_, err = db.GetSecret(testUser.Email)
 	if err == nil {
 		t.Errorf("No error reported retreiving un-set secret for new user: should be %s", models.SecretDoesntExist.Error())
 	}
@@ -47,7 +47,7 @@ func TestSetGetSecret(t *testing.T) {
 		Locale:     "us",
 	}
 
-	err := gspkDb.AddUser(testUser)
+	err := db.AddUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
@@ -57,12 +57,12 @@ func TestSetGetSecret(t *testing.T) {
 		t.Errorf("Error generating new secret: %s", err.Error())
 	}
 
-	err = gspkDb.StoreSecret(testUser.Email, secret)
+	err = db.StoreSecret(testUser.Email, secret)
 	if err != nil {
 		t.Errorf("Error setting secret: %s", err.Error())
 	}
 
-	dbSecret, err := gspkDb.GetSecret(testUser.Email)
+	dbSecret, err := db.GetSecret(testUser.Email)
 	if err != nil {
 		t.Errorf("Error getting secret: %s", err.Error())
 	}

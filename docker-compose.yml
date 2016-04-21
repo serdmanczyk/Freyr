@@ -1,27 +1,27 @@
 version: '2'
 services:
   nginx:
-    image: gspknginx
+    image: serdmanczyk/freyrnginx
     build: 
       context: ./nginx/
     ports:
       - "8080:80"
       - "8443:443"
     links:
-      - gardenspark
-  gardenspark:
+      - freyr
+  freyr:
     restart: always
-    image: serdmanczyk/gardenspark
+    image: serdmanczyk/freyr
     build: 
       context: .
     env_file: .env
     links:
-      - gspkpostgres
+      - postgres
     depends_on:
-      - gspkpostgres
-  gspkpostgres:
+      - postgres
+  postgres:
     restart: always
     build: 
       context: ./postgres/
-    image: serdmanczyk/gspkpostgres
+    image: serdmanczyk/freyrpostgres
     env_file: ./postgres/.env

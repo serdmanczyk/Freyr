@@ -2,7 +2,7 @@ package token
 
 import (
 	"github.com/dgrijalva/jwt-go"
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 	"testing"
 	"time"
 	//"fmt"

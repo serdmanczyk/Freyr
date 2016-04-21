@@ -3,7 +3,7 @@
 package database
 
 import (
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 	"reflect"
 	"testing"
 )
@@ -18,12 +18,12 @@ func TestAddUser(t *testing.T) {
 		Locale:     "us",
 	}
 
-	err := gspkDb.AddUser(testUser)
+	err := db.AddUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
 
-	dbUser, err := gspkDb.GetUser(testUser.Email)
+	dbUser, err := db.GetUser(testUser.Email)
 	if err != nil {
 		t.Fatalf("Failed getting user: ", err.Error())
 	}
@@ -42,12 +42,12 @@ func TestAddUserTwice(t *testing.T) {
 		Gender:     "male",
 		Locale:     "gall",
 	}
-	err := gspkDb.AddUser(testUser)
+	err := db.AddUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
 
-	err = gspkDb.AddUser(testUser)
+	err = db.AddUser(testUser)
 	if err != nil && err != models.UserAlreadyExists {
 		t.Fatalf("Incorrect error on double insert; expected %s got %s ", models.UserAlreadyExists, err)
 	}

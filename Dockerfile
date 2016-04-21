@@ -1,5 +1,5 @@
 FROM centurylink/ca-certs
 
-COPY gardenspark /
+COPY freyr /
 EXPOSE 8080
-ENTRYPOINT ["/gardenspark"]
+ENTRYPOINT ["/freyr"]

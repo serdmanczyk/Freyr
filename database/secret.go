@@ -2,10 +2,10 @@ package database
 
 import (
 	"database/sql"
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 )
 
-func (db GspkDb) GetSecret(userEmail string) (secret models.Secret, err error) {
+func (db DB) GetSecret(userEmail string) (secret models.Secret, err error) {
 	var secretString string
 
 	secret = models.Secret([]byte{})
@@ -20,7 +20,7 @@ func (db GspkDb) GetSecret(userEmail string) (secret models.Secret, err error) {
 	return
 }
 
-func (db GspkDb) StoreSecret(userEmail string, secret models.Secret) error {
+func (db DB) StoreSecret(userEmail string, secret models.Secret) error {
 	_, err := db.Exec("update users set secret = $1 where email = $2;", secret.Encode(), userEmail)
 
 	return err

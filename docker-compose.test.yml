@@ -1,21 +1,23 @@
 version: '2'
 services:
-  testgardenspark:
+  freyr:
     restart: always
     image: golang
     volumes:
       - $GOPATH/src/:/go/src/
-      - ./:/go/src/github.com/serdmanczyk/gardenspark/
-    working_dir: /go/src/github.com/serdmanczyk/gardenspark/
+      - ./:/go/src/github.com/serdmanczyk/freyr/
+    working_dir: /go/src/github.com/serdmanczyk/freyr/
     command: go test ./... -tags=integration
     links:
-      - testgspkpostgres
+      - postgres
     depends_on:
-      - testgspkpostgres
-  testgspkpostgres:
+      - postgres
+  postgres:
     build: 
       context: ./postgres/
-    image: serdmanczyk/testgspkpostgres
+    image: postgres:9.4
+    volumes:
+      - ./postgres/:/docker-entrypoint-initdb.d/
     environment:
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpassword

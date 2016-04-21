@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/cyclopsci/apollo"
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/net/context"
 	"io"
 	"net/http"

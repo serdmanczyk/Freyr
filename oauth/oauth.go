@@ -2,8 +2,8 @@ package oauth
 
 import (
 	"errors"
-	"github.com/serdmanczyk/gardenspark/models"
-	"github.com/serdmanczyk/gardenspark/token"
+	"github.com/serdmanczyk/freyr/models"
+	"github.com/serdmanczyk/freyr/token"
 	"golang.org/x/oauth2"
 	"net/http"
 	"reflect"
@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	CookieName = "_gspk_"
+	CookieName = "_freyr_"
 )
 
 var (

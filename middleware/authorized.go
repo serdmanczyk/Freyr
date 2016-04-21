@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"github.com/cyclopsci/apollo"
-	"github.com/serdmanczyk/gardenspark/models"
-	"github.com/serdmanczyk/gardenspark/oauth"
-	"github.com/serdmanczyk/gardenspark/token"
+	"github.com/serdmanczyk/freyr/models"
+	"github.com/serdmanczyk/freyr/oauth"
+	"github.com/serdmanczyk/freyr/token"
 	"golang.org/x/net/context"
 	"net/http"
 	"strconv"
@@ -14,11 +14,11 @@ import (
 const (
 	apiAuthTypeValue    = "API"
 	deviceAuthTypeValue = "DEVICE"
-	authTypeHeader      = "X-GSPK-AUTHTYPE"
-	tokenHeader         = "X-GSPK-TOKEN"
-	authUserHeader      = "X-GSPK-USER"
-	apiAuthDateHeader   = "X-GSPK-DATETIME"
-	apiSignatureHeader  = "X-GSPK-SIGNATURE"
+	authTypeHeader      = "X-FREYR-AUTHTYPE"
+	tokenHeader         = "X-FREYR-TOKEN"
+	authUserHeader      = "X-FREYR-USER"
+	apiAuthDateHeader   = "X-FREYR-DATETIME"
+	apiSignatureHeader  = "X-FREYR-SIGNATURE"
 )
 
 type Authorizer interface {

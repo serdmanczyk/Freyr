@@ -5,7 +5,7 @@ import $ from 'jquery';
 // import moment from 'moment';
 
 // import "css!../css/bootstrap.min.css";
-// import "../css/gardenspark.css";
+// import "../css/freyr.css";
 // import "../css/grayscale.css";
 
 // var numeral = require('numeral');

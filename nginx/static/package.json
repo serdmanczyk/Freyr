@@ -1,7 +1,7 @@
 {
-  "name": "gardenspark",
+  "name": "freyr",
   "version": "0.1.0",
-  "description": "frontend for gardenspark",
+  "description": "frontend for freyr",
   "main": "app.js",
   "scripts": {
     "test": "test"

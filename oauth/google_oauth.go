@@ -1,7 +1,7 @@
 package oauth
 
 import (
-	"github.com/serdmanczyk/gardenspark/models"
+	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"net/http"

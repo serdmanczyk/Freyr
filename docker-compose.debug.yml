@@ -9,19 +9,19 @@ services:
       - "8080:80"
       - "8443:443"
     links:
-      - gardenspark
-  gardenspark:
+      - freyr
+  freyr:
     restart: always
     image: golang
     volumes:
       - $GOPATH/src/:/go/src/
-      - ./:/go/src/github.com/serdmanczyk/gardenspark/
-    working_dir: /go/src/github.com/serdmanczyk/gardenspark/
+      - ./:/go/src/github.com/serdmanczyk/freyr/
+    working_dir: /go/src/github.com/serdmanczyk/freyr/
     command: go run main.go
     env_file: .env
     links:
-      - gspkpostgres
-  gspkpostgres:
+      - postgres
+  postgres:
     restart: always
     image: postgres:9.4
     volumes:

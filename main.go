@@ -4,25 +4,25 @@ import (
 	"flag"
 	"github.com/codegangsta/negroni"
 	"github.com/cyclopsci/apollo"
-	"github.com/serdmanczyk/gardenspark/database"
-	"github.com/serdmanczyk/gardenspark/envflags"
-	"github.com/serdmanczyk/gardenspark/middleware"
-	"github.com/serdmanczyk/gardenspark/oauth"
-	"github.com/serdmanczyk/gardenspark/routes"
-	"github.com/serdmanczyk/gardenspark/token"
+	"github.com/serdmanczyk/freyr/database"
+	"github.com/serdmanczyk/freyr/envflags"
+	"github.com/serdmanczyk/freyr/middleware"
+	"github.com/serdmanczyk/freyr/oauth"
+	"github.com/serdmanczyk/freyr/routes"
+	"github.com/serdmanczyk/freyr/token"
 	"log"
 	"net/http"
 	"os"
 )
 
 type Config struct {
-	OauthClientId     string `flag:"oauthClientId" env:"GSPK_OAUTHID"`
-	OauthClientSecret string `flag:"oauthClientSecret" env:"GSPK_OAUTHSECRET"`
-	Domain            string `flag:"domain" env:"GSPK_DOMAIN"`
-	SecretKey         string `flag:"secretkey" env:"GSPK_SECRET"`
-	DBHost            string `flag:"dbhost" env:"GSPK_DBHOST"`
-	DBUser            string `flag:"dbuser" env:"GSPK_DBUSER"`
-	DBPassword        string `flag:"dbpassw" env:"GSPK_DBPASSW"`
+	OauthClientId     string `flag:"oauthClientId" env:"FREYR_OAUTHID"`
+	OauthClientSecret string `flag:"oauthClientSecret" env:"FREYR_OAUTHSECRET"`
+	Domain            string `flag:"domain" env:"FREYR_DOMAIN"`
+	SecretKey         string `flag:"secretkey" env:"FREYR_SECRET"`
+	DBHost            string `flag:"dbhost" env:"FREYR_DBHOST"`
+	DBUser            string `flag:"dbuser" env:"FREYR_DBUSER"`
+	DBPassword        string `flag:"dbpassw" env:"FREYR_DBPASSW"`
 }
 
 func main() {

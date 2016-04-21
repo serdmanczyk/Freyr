@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"github.com/cyclopsci/apollo"
-	"github.com/serdmanczyk/gardenspark/models"
-	"github.com/serdmanczyk/gardenspark/oauth"
-	"github.com/serdmanczyk/gardenspark/token"
+	"github.com/serdmanczyk/freyr/models"
+	"github.com/serdmanczyk/freyr/oauth"
+	"github.com/serdmanczyk/freyr/token"
 	"golang.org/x/net/context"
 	"io"
 	"net/http"

@@ -1,8 +1,8 @@
 package oauth
 
 import (
-	"github.com/serdmanczyk/gardenspark/models"
-	"github.com/serdmanczyk/gardenspark/token"
+	"github.com/serdmanczyk/freyr/models"
+	"github.com/serdmanczyk/freyr/token"
 	"golang.org/x/oauth2"
 	"net/http"
 	"net/http/httptest"

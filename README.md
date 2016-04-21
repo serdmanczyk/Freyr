@@ -1,5 +1,7 @@
 ![asdf](repo_files/logo.png "Freyr")
 
+*WORK IN PROGRESS: Still in greenfield development*
+
 Pivot of the old GardenSpark project into go.
 
 A full stack application run through docker.  UI in ReactJS, scalable api backend written in Go, load balanced with Nginx.

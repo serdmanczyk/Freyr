@@ -13,7 +13,7 @@ var (
 
 type UserStore interface {
 	GetUser(email string) (User, error)
-	AddUser(User) error
+	StoreUser(User) error
 }
 
 type User struct {

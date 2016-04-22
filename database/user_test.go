@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestAddUser(t *testing.T) {
+func TestStoreUser(t *testing.T) {
 	testUser := models.User{
 		Email:      "jackharkness@torchwood.co.uk",
 		Name:       "Jack Harkness",
@@ -18,7 +18,7 @@ func TestAddUser(t *testing.T) {
 		Locale:     "us",
 	}
 
-	err := db.AddUser(testUser)
+	err := db.StoreUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
@@ -33,7 +33,7 @@ func TestAddUser(t *testing.T) {
 	}
 }
 
-func TestAddUserTwice(t *testing.T) {
+func TestStoreUserTwice(t *testing.T) {
 	testUser := models.User{
 		Email:      "thedoctor@gallifrey.time",
 		Name:       "doctor",
@@ -42,12 +42,12 @@ func TestAddUserTwice(t *testing.T) {
 		Gender:     "male",
 		Locale:     "gall",
 	}
-	err := db.AddUser(testUser)
+	err := db.StoreUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
 
-	err = db.AddUser(testUser)
+	err = db.StoreUser(testUser)
 	if err != nil && err != models.UserAlreadyExists {
 		t.Fatalf("Incorrect error on double insert; expected %s got %s ", models.UserAlreadyExists, err)
 	}

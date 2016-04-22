@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	}
 
 	db = ldb
-	_, err = db.Exec("TRUNCATE users")
+	_, err = db.Exec("TRUNCATE users, readings")
 	if err != nil {
 		panic("Coudn't connect to table! " + err.Error())
 	}

@@ -156,7 +156,7 @@ func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) conte
 	}
 
 	requestCoreId := r.PostFormValue("coreid")
-	if jwtTokenString == "" {
+	if requestCoreId == "" {
 		return nil
 	}
 

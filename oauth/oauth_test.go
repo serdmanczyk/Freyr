@@ -31,7 +31,7 @@ func (f *fakeUserStore) GetUser(email string) (models.User, error) {
 	return models.User{}, nil
 }
 
-func (f *fakeUserStore) AddUser(models.User) error {
+func (f *fakeUserStore) StoreUser(models.User) error {
 	return nil
 }
 

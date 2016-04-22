@@ -14,7 +14,7 @@ func (db DB) GetUser(email string) (models.User, error) {
 	return user, err
 }
 
-func (db DB) AddUser(user models.User) error {
+func (db DB) StoreUser(user models.User) error {
 	_, err := db.Exec("insert into users (email, full_name, family_name, given_name, gender, locale) values ($1, $2, $3, $4, $5, $6);", user.Email, user.Name, user.FamilyName, user.GivenName, user.Gender, user.Locale)
 
 	if err, ok := err.(*pq.Error); ok {

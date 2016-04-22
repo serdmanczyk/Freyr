@@ -95,7 +95,7 @@ func HandleOAuth2Callback(o OauthHandler, t token.TokenSource, userStore models.
 			return
 		}
 
-		err = userStore.AddUser(*user)
+		err = userStore.StoreUser(*user)
 		if err != nil && err != models.UserAlreadyExists {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

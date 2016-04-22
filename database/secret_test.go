@@ -22,7 +22,7 @@ func TestGetSecretDoesntExist(t *testing.T) {
 		t.Errorf("Unknown error retreiving secret for non-existent user: %s", err.Error())
 	}
 
-	err = db.AddUser(testUser)
+	err = db.StoreUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}
@@ -47,7 +47,7 @@ func TestSetGetSecret(t *testing.T) {
 		Locale:     "us",
 	}
 
-	err := db.AddUser(testUser)
+	err := db.StoreUser(testUser)
 	if err != nil {
 		t.Fatalf("Failed adding user: ", err.Error())
 	}

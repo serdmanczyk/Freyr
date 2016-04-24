@@ -129,11 +129,11 @@ func TestApiAuthorizer(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	authorizeRequest.Header.Add(authTypeHeader, apiAuthTypeValue)
-	authorizeRequest.Header.Add(authUserHeader, userEmail)
+	authorizeRequest.Header.Add(AuthTypeHeader, ApiAuthTypeValue)
+	authorizeRequest.Header.Add(AuthUserHeader, userEmail)
 	n := time.Now().Unix()
 	unixStamp := strconv.FormatInt(n, 10)
-	authorizeRequest.Header.Add(apiAuthDateHeader, unixStamp)
+	authorizeRequest.Header.Add(ApiAuthDateHeader, unixStamp)
 
 	_, signingString := apiSigningString(authorizeRequest)
 	if signingString == "" {
@@ -141,7 +141,7 @@ func TestApiAuthorizer(t *testing.T) {
 	}
 
 	signature := secret.Sign(signingString)
-	authorizeRequest.Header.Add(apiSignatureHeader, signature)
+	authorizeRequest.Header.Add(ApiSignatureHeader, signature)
 
 	handler := apollo.New(Authorize(aa)).ThenFunc(happyHandler)
 
@@ -181,8 +181,8 @@ func TestDeviceAuthorizer(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	authorizeRequest.Header.Add(authTypeHeader, deviceAuthTypeValue)
-	authorizeRequest.Header.Add(authUserHeader, userEmail)
+	authorizeRequest.Header.Add(AuthTypeHeader, DeviceAuthTypeValue)
+	authorizeRequest.Header.Add(AuthUserHeader, userEmail)
 	authorizeRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	tokGen := token.JtwTokenGen(secret)
@@ -194,7 +194,7 @@ func TestDeviceAuthorizer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	authorizeRequest.Header.Add(tokenHeader, token)
+	authorizeRequest.Header.Add(TokenHeader, token)
 
 	authorizeResponse := httptest.NewRecorder()
 

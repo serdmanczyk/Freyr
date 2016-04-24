@@ -73,7 +73,7 @@ func TestRotateSecret(t *testing.T) {
 	userEmail := "Yggdrasil@nine.worlds"
 	fakeSs := fakeSecretStore{}
 
-	rotReq, err := http.NewRequest("GET", "/rotate_secret", nil)
+	rotReq, err := http.NewRequest("POST", "/rotate_secret", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

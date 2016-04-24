@@ -52,7 +52,11 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/", userAuthed.Then(routes.Hello()))
 	mux.Handle("/secret", userAuthed.Then(routes.GenerateSecret(dbConn)))
+	mux.Handle("/get_readings", userAuthed.Then(routes.GetReadings(dbConn)))
+	mux.Handle("/post_reading", userAuthed.Then(routes.GetReadings(dbConn)))
+
 	mux.Handle("/rotate_secret", apiAuthed.Then(routes.RotateSecret(dbConn)))
+
 	mux.Handle("/authorize", oauth.HandleAuthorize(googleOauth, tokenSource))
 	mux.Handle("/oauth2callback", oauth.HandleOAuth2Callback(googleOauth, tokenSource, dbConn))
 

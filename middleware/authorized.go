@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	apiAuthTypeValue    = "API"
-	deviceAuthTypeValue = "DEVICE"
-	authTypeHeader      = "X-FREYR-AUTHTYPE"
-	tokenHeader         = "X-FREYR-TOKEN"
-	authUserHeader      = "X-FREYR-USER"
-	apiAuthDateHeader   = "X-FREYR-DATETIME"
-	apiSignatureHeader  = "X-FREYR-SIGNATURE"
+	ApiAuthTypeValue    = "API"
+	DeviceAuthTypeValue = "DEVICE"
+	AuthTypeHeader      = "X-FREYR-AUTHTYPE"
+	TokenHeader         = "X-FREYR-TOKEN"
+	AuthUserHeader      = "X-FREYR-USER"
+	ApiAuthDateHeader   = "X-FREYR-DATETIME"
+	ApiSignatureHeader  = "X-FREYR-SIGNATURE"
 )
 
 type Authorizer interface {
@@ -77,12 +77,12 @@ func NewApiAuthorizer(ss models.SecretStore) *ApiAuthorizer {
 }
 
 func (a *ApiAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
-	authType := r.Header.Get(authTypeHeader)
-	if authType != apiAuthTypeValue {
+	authType := r.Header.Get(AuthTypeHeader)
+	if authType != ApiAuthTypeValue {
 		return nil
 	}
 
-	signature := r.Header.Get(apiSignatureHeader)
+	signature := r.Header.Get(ApiSignatureHeader)
 	if signature == "" {
 		return nil
 	}
@@ -105,8 +105,8 @@ func (a *ApiAuthorizer) Authorize(ctx context.Context, r *http.Request) context.
 }
 
 func apiSigningString(r *http.Request) (userEmail string, signinString string) {
-	datetime := r.Header.Get(apiAuthDateHeader)
-	user := r.Header.Get(authUserHeader)
+	datetime := r.Header.Get(ApiAuthDateHeader)
+	user := r.Header.Get(AuthUserHeader)
 
 	if datetime == "" || user == "" {
 		return
@@ -135,17 +135,17 @@ func NewDeviceAuthorizer(ss models.SecretStore) *DeviceAuthorizer {
 }
 
 func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
-	authType := r.Header.Get(authTypeHeader)
-	if authType != deviceAuthTypeValue {
+	authType := r.Header.Get(AuthTypeHeader)
+	if authType != DeviceAuthTypeValue {
 		return nil
 	}
 
-	jwtTokenString := r.Header.Get(tokenHeader)
+	jwtTokenString := r.Header.Get(TokenHeader)
 	if jwtTokenString == "" {
 		return nil
 	}
 
-	requestUserEmail := r.Header.Get(authUserHeader)
+	requestUserEmail := r.Header.Get(AuthUserHeader)
 	if requestUserEmail == "" {
 		return nil
 	}

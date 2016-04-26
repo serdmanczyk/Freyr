@@ -3,8 +3,8 @@
 package database
 
 import (
-	"github.com/serdmanczyk/freyr/models"
 	"github.com/serdmanczyk/freyr/fake"
+	"github.com/serdmanczyk/freyr/models"
 	"testing"
 	"time"
 )

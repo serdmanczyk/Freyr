@@ -6,9 +6,9 @@ import (
 	"github.com/cyclopsci/apollo"
 	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/net/context"
+	"io"
 	"net/http"
 	"time"
-	"io"
 )
 
 var (

@@ -1,9 +1,9 @@
 package oauth
 
 import (
+	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
 	"github.com/serdmanczyk/freyr/token"
-	"golang.org/x/oauth2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -17,44 +17,8 @@ const (
 	testEmail = "Ardvark@comeatme.bro"
 )
 
-type fakeUserStore struct{}
-
-func newfakeUserStore() *fakeUserStore {
-	return &fakeUserStore{}
-}
-
-func (f *fakeUserStore) HasUser() bool {
-	return true
-}
-
-func (f *fakeUserStore) GetUser(email string) (models.User, error) {
-	return models.User{}, nil
-}
-
-func (f *fakeUserStore) StoreUser(models.User) error {
-	return nil
-}
-
-type fakeOauth struct{}
-
-func (f *fakeOauth) GetRedirectURL(csrftoken string) string {
-	return "/someurl?state=" + csrftoken
-}
-
-func (f *fakeOauth) GetCallbackCsrfToken(r *http.Request) string {
-	return r.FormValue("state")
-}
-
-func (f *fakeOauth) GetExchangeToken(r *http.Request) (*oauth2.Token, error) {
-	return &oauth2.Token{}, nil
-}
-
-func (f *fakeOauth) GetUserData(tok *oauth2.Token) (*models.User, error) {
-	return &models.User{Email: testEmail}, nil
-}
-
 func TestHandleThreeLegged(t *testing.T) {
-	oauth := &fakeOauth{}
+	oauth := &fake.Oauth{Email: testEmail}
 	tokensource := token.JtwTokenGen(testKey)
 
 	authorizeRequest, err := http.NewRequest("GET", "/authorize", nil)
@@ -101,7 +65,7 @@ func TestHandleThreeLegged(t *testing.T) {
 	}
 	callbackResponse := httptest.NewRecorder()
 
-	userStore := newfakeUserStore()
+	userStore := fake.UserStore{testEmail: models.User{Email: testEmail}}
 	callbackHandler := HandleOAuth2Callback(oauth, tokensource, userStore)
 	callbackHandler.ServeHTTP(callbackResponse, callbackRequest)
 
@@ -148,7 +112,7 @@ func TestHandleThreeLegged(t *testing.T) {
 // TODO: refactor following into table test??
 
 func TestRejectToken(t *testing.T) {
-	oauth := &fakeOauth{}
+	oauth := &fake.Oauth{Email: testEmail}
 	tokensource := token.JtwTokenGen(testKey)
 
 	callbackUrl := "/oauth2callback?state=shutyomouth&code=jibbajabba"
@@ -158,7 +122,7 @@ func TestRejectToken(t *testing.T) {
 	}
 	callbackResponse := httptest.NewRecorder()
 
-	userStore := newfakeUserStore()
+	userStore := fake.UserStore{testEmail: models.User{Email: testEmail}}
 	callbackHandler := HandleOAuth2Callback(oauth, tokensource, userStore)
 	callbackHandler.ServeHTTP(callbackResponse, callbackRequest)
 
@@ -168,7 +132,7 @@ func TestRejectToken(t *testing.T) {
 }
 
 func TestExpiredToken(t *testing.T) {
-	oauth := &fakeOauth{}
+	oauth := &fake.Oauth{Email: testEmail}
 	tokensource := token.JtwTokenGen(testKey)
 
 	claims := map[string]interface{}{}
@@ -184,7 +148,7 @@ func TestExpiredToken(t *testing.T) {
 	}
 	callbackResponse := httptest.NewRecorder()
 
-	userStore := newfakeUserStore()
+	userStore := fake.UserStore{testEmail: models.User{Email: testEmail}}
 	callbackHandler := HandleOAuth2Callback(oauth, tokensource, userStore)
 	callbackHandler.ServeHTTP(callbackResponse, callbackRequest)
 
@@ -198,7 +162,7 @@ func TestExpiredToken(t *testing.T) {
 }
 
 func TestInvalidClaims(t *testing.T) {
-	oauth := &fakeOauth{}
+	oauth := &fake.Oauth{Email: testEmail}
 	tokensource := token.JtwTokenGen(testKey)
 
 	claims := map[string]interface{}{
@@ -216,7 +180,7 @@ func TestInvalidClaims(t *testing.T) {
 	}
 	callbackResponse := httptest.NewRecorder()
 
-	userStore := newfakeUserStore()
+	userStore := fake.UserStore{testEmail: models.User{Email: testEmail}}
 	callbackHandler := HandleOAuth2Callback(oauth, tokensource, userStore)
 	callbackHandler.ServeHTTP(callbackResponse, callbackRequest)
 

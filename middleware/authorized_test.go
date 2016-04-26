@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/cyclopsci/apollo"
+	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
 	"github.com/serdmanczyk/freyr/oauth"
 	"github.com/serdmanczyk/freyr/token"
@@ -19,22 +20,6 @@ const (
 	okResponse = "Everything is OK"
 	testEmail  = "Ardvark@comeatme.bro"
 )
-
-// TODO: stole this from token package tests, figure out way to share
-type fakeSecretStore map[string]models.Secret
-
-func (s fakeSecretStore) GetSecret(userEmail string) (models.Secret, error) {
-	secret, ok := s[userEmail]
-	if !ok {
-		return models.Secret([]byte{}), models.SecretDoesntExist
-	}
-	return secret, nil
-}
-
-func (s fakeSecretStore) StoreSecret(userEmail string, secret models.Secret) error {
-	s[userEmail] = secret
-	return nil
-}
 
 func testToken(tok token.TokenSource) (string, error) {
 	expiry := time.Now().Add(time.Second * 1)
@@ -121,7 +106,7 @@ func TestApiAuthorizer(t *testing.T) {
 
 	userEmail := "badwolf@galifrey.unv"
 
-	ss := fakeSecretStore{userEmail: secret}
+	ss := fake.SecretStore{userEmail: secret}
 	aa := NewApiAuthorizer(ss)
 
 	authorizeRequest, err := http.NewRequest("GET", "/authorize", nil)
@@ -172,7 +157,7 @@ func TestDeviceAuthorizer(t *testing.T) {
 	userEmail := "badwolf@galifrey.unv"
 	coreId := "53ff76065075535110341387"
 
-	ss := fakeSecretStore{userEmail: secret}
+	ss := fake.SecretStore{userEmail: secret}
 	da := NewDeviceAuthorizer(ss)
 
 	body := strings.NewReader("event=post_reading&data=%7B%20%22temperature%22%3A%2019.800%2C%20%22humidity%22%3A%2057.300%2C%20%22moisture%22%3A%200000%2C%20%22light%22%3A%201.000%20%7D&published_at=2016-04-20T04%3A32%3A52.962Z&coreid=" + coreId)

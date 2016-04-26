@@ -2,10 +2,12 @@ package models
 
 import (
 	"encoding/json"
+	"math"
 	"time"
 )
 
 const (
+	epsilon  = 0.1
 	JsonTime = "2006-01-02T15:04:05.000Z"
 )
 
@@ -38,4 +40,52 @@ func ReadingFromJSON(userEmail, coreId string, posted time.Time, jsonStr string)
 	reading.Posted = posted
 
 	return reading, nil
+}
+
+func (a Reading) Compare(b Reading) bool {
+	if a.UserEmail != b.UserEmail {
+		return false
+	}
+
+	if a.CoreId != b.CoreId {
+		return false
+	}
+
+	if !a.Posted.Equal(b.Posted) {
+		return false
+	}
+
+	for _, pair := range []struct {
+		a, b float32
+	}{
+		{a.Temperature, b.Temperature},
+		{a.Humidity, b.Humidity},
+		{a.Moisture, b.Moisture},
+		{a.Light, b.Light},
+		{a.Battery, b.Battery},
+	} {
+		if !floatCompare(pair.a, pair.b) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func floatCompare(a, b float32) bool {
+	if math.Abs(float64(a-b)) < epsilon {
+		return true
+	}
+
+	return false
+}
+
+func FilterReadings(input []Reading, filter func(Reading) bool) (output []Reading) {
+	for _, r := range input {
+		if filter(r) {
+			output = append(output, r)
+		}
+	}
+
+	return
 }

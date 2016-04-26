@@ -4,73 +4,10 @@ package database
 
 import (
 	"github.com/serdmanczyk/freyr/models"
-	"math"
-	"math/rand"
+	"github.com/serdmanczyk/freyr/fake"
 	"testing"
 	"time"
 )
-
-var randGen = rand.New(rand.NewSource(time.Now().Unix()))
-
-func floatBetween(a, b float32) float32 {
-	if b <= a {
-		return 0.0
-	}
-	return (randGen.Float32() * (b - a)) + a
-}
-
-func randReading(userEmail, core string, posted time.Time) models.Reading {
-	return models.Reading{
-		UserEmail:   userEmail,
-		CoreId:      core,
-		Posted:      posted,
-		Temperature: floatBetween(10.0, 20.0),
-		Humidity:    floatBetween(30.0, 60.0),
-		Moisture:    floatBetween(20.0, 96.0),
-		Light:       floatBetween(0.0, 120.0),
-		Battery:     floatBetween(0.0, 100.0),
-	}
-}
-
-func cmpFloat(a, b float32) bool {
-	if math.Abs(float64(a-b)) < 0.1 {
-		return true
-	}
-
-	return false
-}
-
-func compare(a, b models.Reading) bool {
-	if a.UserEmail != b.UserEmail {
-		return false
-	}
-
-	if a.CoreId != b.CoreId {
-		return false
-	}
-
-	if !cmpFloat(a.Temperature, b.Temperature) {
-		return false
-	}
-
-	if !cmpFloat(a.Humidity, b.Humidity) {
-		return false
-	}
-
-	if !cmpFloat(a.Moisture, b.Moisture) {
-		return false
-	}
-
-	if !cmpFloat(a.Light, b.Light) {
-		return false
-	}
-
-	if !cmpFloat(a.Battery, b.Battery) {
-		return false
-	}
-
-	return true
-}
 
 func TestReadings(t *testing.T) {
 	userEmail := "odin@asgard.unv"
@@ -86,7 +23,7 @@ func TestReadings(t *testing.T) {
 	}
 
 	start := time.Unix(1461300000, 0)
-	reading := randReading(userEmail, coreId, start)
+	reading := fake.RandReading(userEmail, coreId, start)
 
 	err = db.StoreReading(reading)
 	if err != nil {
@@ -104,7 +41,7 @@ func TestReadings(t *testing.T) {
 
 	retreading := readings[0]
 
-	if !compare(reading, retreading) {
+	if !reading.Compare(retreading) {
 		t.Fatalf("Incorrect reading returned; expected %v, got %v", reading, retreading)
 	}
 }
@@ -134,7 +71,7 @@ func TestDBGetLatest(t *testing.T) {
 		{email: userTwoEmail, coreid: userTwoCoreOne},
 	} {
 		for i := 0; i < 100; i++ {
-			err := db.StoreReading(randReading(comb.email, comb.coreid, timeStamp))
+			err := db.StoreReading(fake.RandReading(comb.email, comb.coreid, timeStamp))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -143,9 +80,9 @@ func TestDBGetLatest(t *testing.T) {
 	}
 
 	maxTimeStamp := timeStamp.Add(time.Second)
-	latestInputUserOneCoreOne := randReading(userOneEmail, userOneCoreOne, maxTimeStamp)
-	latestInputUserOneCoreTwo := randReading(userOneEmail, userOneCoreTwo, maxTimeStamp)
-	latestInputUserTwoCoreOne := randReading(userTwoEmail, userTwoCoreOne, maxTimeStamp)
+	latestInputUserOneCoreOne := fake.RandReading(userOneEmail, userOneCoreOne, maxTimeStamp)
+	latestInputUserOneCoreTwo := fake.RandReading(userOneEmail, userOneCoreTwo, maxTimeStamp)
+	latestInputUserTwoCoreOne := fake.RandReading(userTwoEmail, userTwoCoreOne, maxTimeStamp)
 
 	for _, reading := range []models.Reading{
 		latestInputUserOneCoreOne,
@@ -178,7 +115,7 @@ func TestDBGetLatest(t *testing.T) {
 		t.Error("Core missing in return from latest")
 	}
 
-	if !compare(latestInputUserOneCoreOne, latestOutputUserOneCoreOne) {
+	if !latestInputUserOneCoreOne.Compare(latestOutputUserOneCoreOne) {
 		t.Fatalf("Incorrect reading returned; expected %v, got %v", latestInputUserOneCoreOne, latestOutputUserOneCoreOne)
 	}
 
@@ -187,7 +124,7 @@ func TestDBGetLatest(t *testing.T) {
 		t.Error("Core missing in return from latest")
 	}
 
-	if !compare(latestInputUserOneCoreTwo, latestOutputUserOneCoreTwo) {
+	if !latestInputUserOneCoreTwo.Compare(latestOutputUserOneCoreTwo) {
 		t.Fatalf("Incorrect reading returned; expected %v, got %v", latestInputUserOneCoreTwo, latestOutputUserOneCoreTwo)
 	}
 
@@ -200,7 +137,7 @@ func TestDBGetLatest(t *testing.T) {
 		t.Fatalf("Expected one readings returned from latest, got %d", len(latestOutputUserTwo))
 	}
 
-	if !compare(latestInputUserTwoCoreOne, latestOutputUserTwo[0]) {
+	if !latestInputUserTwoCoreOne.Compare(latestOutputUserTwo[0]) {
 		t.Fatalf("Incorrect reading returned; expected %v, got %v", latestInputUserOneCoreTwo, latestOutputUserOneCoreTwo)
 	}
 }

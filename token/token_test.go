@@ -2,11 +2,11 @@ package token
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
+	"reflect"
 	"testing"
 	"time"
-	//"fmt"
-	"reflect"
 )
 
 const (
@@ -14,21 +14,6 @@ const (
 	badKey   = "bokenbokenboken"
 	pkcs8key = "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDRhQ57iLfj4LZ0\nqhj4vG5kg1RVF5uCaoJHfrG2mlL3SqMGGUoauosw3ONtXa9MBaoyci1VBBwzdGmP\nowwJKSwiIa9m8XoVaFvMxuTbcsQeljJGQ22bkgEDDSfs0vx5VxD9sSqqXeSRTxOz\nQSUBvykGX8kI4Sr5spOSdeRjGHCKjFqBfI771/XFLisSSIZBqJg9uk53t4K3oHC3\nQSCqZk+uBU1A5pnOpc+epoiAhennu1XvX5gZXXRspXXgLfehax6Q2pRr8BUkhdCX\nyj7gwlJ9HD9GXiMLSDSpyCCjB7Csu8A2Tsh2z4HT+fB9nnAclAdvIkHA69d6dFso\nqwob1E/9AgMBAAECggEBAJTbddiq4AuVAcyNdURzi/L5o5b5ONFFnt3w044qwrtT\nWdPhb9bhpjbHGQYAw6S9eZhxqmd2jhq4oK8eZlSz3dk6GYaIFfbTuDUbMkn/lfst\nNvbYvS0EZJeoZy9JD3ueMkIr92YnY1ch2ZtHs2U0TY9rykb2wzO4fkRWYjdNi9fC\navwoUOAESpaOcDckRyWz8RWldgtBpkhl0EDGWGWQ8Eo8uSiWKyUfE03N86Z/nQ7q\nFuY4l9r/E17V9b1jVGVZePrRGZ9yoxiiF+L4SzWRWhQvNKjghxdKme/g+m5oUczz\n/zCNn/doNmMF9/QShusYiHnJsnIoVsh7zDXxvx0UCbkCgYEA7CVFx1mMVvZwri7D\nyKGAOzSICHmCPrE+LWX8eiYei7NUu2zNljmVoPZ2Ou8SU+1uFBHmJD9qMG3aHzJq\n6cAtfHjWGLO/pXTvMqSudCh4nPfeHP9Shgx2CBHzW6CNj9JG5EWKbV+TDwPxo1eq\nX82ZaNT9uqcprqOc28YTsUl79DsCgYEA4yKygI2r2tSg4f02syseyuDOA0PIMrHg\n2303XFk7+oCd1euLii2nnjq/qXtlu7PST56aACRKKms6/V9BRL8hsLePMlFMHxar\nj8q1Ovf/BorPh9NyqzbeqLQNlazE93IxUgN0tVGrGnD1URWqX5p4XLkHniNi/oLA\nYUd8bwd7oScCgYEAxElbDhAuKh7gnLg8fylXGF9a74horcnQQBY03iePXlnrBXu0\nC7nD2S7kKaqNFnwV8tLJ9LlNgAHfu+zBl5jpdjxO4euPUm23YeYnKGB3mSojUwEb\nzFbRSXX6TeBPqwuDZ70yCiXWbDXABiEZelbAvLXGTf8jE4nmGXw05DmLsf8CgYBk\nLKFdYR4yXSS3ht3hF1t1TsCNYA+jjCAHraoE6LYzPRZfior4XjpW5sIxFWNA7YYL\n5380IM00+CYEKUa38zQApHRbVM+lxnHT8SsM3uNzFzWAShmAuapp7T8wjAoyuAJY\nkX2fmm1ENB19rXh+wbnj6xcY/7JhXXlLbiPLNBmqcQKBgQC/vBmBAxR0VN5UMQVw\nNav9vVXDj862PHNgLpTwuBkEf+OX8gjSa2OxKksy/v3xTkueh+FVEfrxZ5GDcjl/\n7Ei8DhfzsiVBBdbqKZpZvOCP8vi6gyNh4gemzvBxY4YYiy2aVGRqDQ6ra12Y8xWt\nO4cr2zZ5uhm+QoD//L3A8qD+YQ==\n-----END PRIVATE KEY-----"
 )
-
-type fakeSecretStore map[string]models.Secret
-
-func (s fakeSecretStore) GetSecret(userEmail string) (models.Secret, error) {
-	secret, ok := s[userEmail]
-	if !ok {
-		return models.Secret([]byte{}), models.SecretDoesntExist
-	}
-	return secret, nil
-}
-
-func (s fakeSecretStore) StoreSecret(userEmail string, secret models.Secret) error {
-	s[userEmail] = secret
-	return nil
-}
 
 func TestTokenGen(t *testing.T) {
 	tkgen := JtwTokenGen(testKey)
@@ -103,7 +88,7 @@ func TestValidateUserToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	ss := fakeSecretStore{userEmail: secret}
+	ss := fake.SecretStore{userEmail: secret}
 
 	tokenGen := JtwTokenGen(secret)
 
@@ -128,7 +113,7 @@ func TestValidateNotfoundUserToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	ss := fakeSecretStore{userEmail: secret}
+	ss := fake.SecretStore{userEmail: secret}
 
 	tokenGen := JtwTokenGen(secret)
 
@@ -153,7 +138,7 @@ func TestValidateInvalidUserToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	ss := fakeSecretStore{userEmail: secret}
+	ss := fake.SecretStore{userEmail: secret}
 
 	newSecret, err := models.NewSecret()
 	if err != nil {

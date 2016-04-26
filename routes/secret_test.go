@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/net/context"
 	"io/ioutil"
@@ -9,26 +10,9 @@ import (
 	"testing"
 )
 
-type fakeSecretStore map[string]models.Secret
-
-func (f fakeSecretStore) GetSecret(userEmail string) (secret models.Secret, err error) {
-	sSecret, ok := f[userEmail]
-	if !ok {
-		err = models.SecretDoesntExist
-	}
-
-	secret = sSecret
-	return
-}
-
-func (f fakeSecretStore) StoreSecret(userEmail string, secret models.Secret) (err error) {
-	f[userEmail] = secret
-	return
-}
-
 func TestGenerateSecret(t *testing.T) {
 	userEmail := "Yggdrasil@nine.worlds"
-	fakeSs := fakeSecretStore{}
+	fakeSs := fake.SecretStore{}
 
 	genReq, err := http.NewRequest("GET", "/generate_secret", nil)
 	if err != nil {
@@ -71,7 +55,7 @@ func TestGenerateSecret(t *testing.T) {
 
 func TestRotateSecret(t *testing.T) {
 	userEmail := "Yggdrasil@nine.worlds"
-	fakeSs := fakeSecretStore{}
+	fakeSs := fake.SecretStore{}
 
 	rotReq, err := http.NewRequest("POST", "/rotate_secret", nil)
 	if err != nil {

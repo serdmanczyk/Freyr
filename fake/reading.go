@@ -13,7 +13,7 @@ func init() {
 	randGen = rand.New(rand.NewSource(time.Now().Unix()))
 }
 
-func floatBetween(a, b float32) float32 {
+func FloatBetween(a, b float32) float32 {
 	if b <= a {
 		return 0.0
 	}
@@ -25,11 +25,11 @@ func RandReading(userEmail, core string, posted time.Time) models.Reading {
 		UserEmail:   userEmail,
 		CoreId:      core,
 		Posted:      posted,
-		Temperature: floatBetween(10.0, 20.0),
-		Humidity:    floatBetween(30.0, 60.0),
-		Moisture:    floatBetween(20.0, 96.0),
-		Light:       floatBetween(0.0, 120.0),
-		Battery:     floatBetween(0.0, 100.0),
+		Temperature: FloatBetween(10.0, 20.0),
+		Humidity:    FloatBetween(30.0, 60.0),
+		Moisture:    FloatBetween(20.0, 96.0),
+		Light:       FloatBetween(0.0, 120.0),
+		Battery:     FloatBetween(0.0, 100.0),
 	}
 }
 

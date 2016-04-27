@@ -36,7 +36,7 @@ func prepareGenDeviceToken(c *cli.Context) {
 
 	expiry, err := time.Parse(time.RFC3339, expiration)
 	if err != nil {
-		panic(err)
+		exit(err)
 	}
 
 	fmt.Println(generateDeviceToken(email, secret, coreid, expiry))
@@ -45,7 +45,7 @@ func prepareGenDeviceToken(c *cli.Context) {
 func generateDeviceToken(email, secret, coreid string, expiry time.Time) string {
 	parsedSecret, err := models.SecretFromBase64(secret)
 	if err != nil {
-		panic(err)
+		exit(err)
 	}
 
 	tkGen := token.JtwTokenGen(parsedSecret)
@@ -55,7 +55,7 @@ func generateDeviceToken(email, secret, coreid string, expiry time.Time) string 
 		"core":  coreid,
 	})
 	if err != nil {
-		panic(err)
+		exit(err)
 	}
 	return token
 }

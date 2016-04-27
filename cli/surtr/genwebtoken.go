@@ -36,7 +36,7 @@ func prepareGenWebToken(c *cli.Context) {
 
 	expiry, err := time.Parse(time.RFC3339, expiration)
 	if err != nil {
-		panic(err)
+		exit(err)
 	}
 
 	fmt.Println(generateWebToken(secret, email, expiry))
@@ -45,13 +45,13 @@ func prepareGenWebToken(c *cli.Context) {
 func generateWebToken(secret, email string, expiry time.Time) string {
 	parsedSecret, err := models.SecretFromBase64(secret)
 	if err != nil {
-		panic(err)
+		exit(err)
 	}
 
 	tkGen := token.JtwTokenGen(parsedSecret)
 	token, err := token.GenerateWebToken(tkGen, expiry, email)
 	if err != nil {
-		panic(err)
+		exit(err)
 	}
 	return token
 }

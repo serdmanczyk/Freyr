@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"time"
+	"fmt"
 )
 
 var (
@@ -26,10 +27,11 @@ func StringsEmpty(strs ...string) bool {
 
 func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 	email := getEmail(ctx)
-	coreid := r.FormValue("coreid")
-	published := r.FormValue("published_at")
-	dataStr := r.FormValue("data")
+	coreid := r.PostFormValue("coreid")
+	published := r.PostFormValue("published_at")
+	dataStr := r.PostFormValue("data")
 
+	fmt.Println(email, coreid, published, dataStr)
 	if StringsEmpty(email, coreid, published, dataStr) {
 		return models.Reading{}, NoReading
 	}
@@ -76,7 +78,7 @@ func PostReading(s models.ReadingStore) apollo.Handler {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 		return
 	})
 }

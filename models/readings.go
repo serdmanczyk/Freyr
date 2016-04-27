@@ -42,6 +42,20 @@ func ReadingFromJSON(userEmail, coreId string, posted time.Time, jsonStr string)
 	return reading, nil
 }
 
+func (r Reading) DataJSON() string {
+	data := map[string]float32{
+		"temperature": r.Temperature,
+		"humidity":    r.Humidity,
+		"moisture":    r.Moisture,
+		"light":       r.Light,
+		"battery":     r.Battery,
+	}
+
+	bytes, _ := json.Marshal(data)
+	return string(bytes)
+}
+
+
 func (a Reading) Compare(b Reading) bool {
 	if a.UserEmail != b.UserEmail {
 		return false

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/codegangsta/cli"
 	"os"
+	"fmt"
 )
 
 func main() {
@@ -13,7 +14,13 @@ func main() {
 	app.Commands = []cli.Command{
 		genWebToken,
 		genDeviceToken,
+		PostReading,
 	}
 
 	app.Run(os.Args)
+}
+
+func exit(err error) {
+	fmt.Println(err.Error())
+	os.Exit(1)
 }

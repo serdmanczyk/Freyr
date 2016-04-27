@@ -13,23 +13,10 @@ import (
 	"time"
 )
 
-func dataJSON(r models.Reading) string {
-	data := map[string]float32{
-		"temperature": r.Temperature,
-		"humidity":    r.Humidity,
-		"moisture":    r.Moisture,
-		"light":       r.Light,
-		"battery":     r.Battery,
-	}
-
-	bytes, _ := json.Marshal(data)
-	return string(bytes)
-}
-
 func formData(r models.Reading) string {
 	v := url.Values{}
 	v.Set("event", "post_reading")
-	v.Set("data", dataJSON(r))
+	v.Set("data", r.DataJSON())
 	v.Set("coreid", r.CoreId)
 	v.Set("published_at", r.Posted.Format(models.JsonTime))
 	return v.Encode()
@@ -60,6 +47,10 @@ func TestPostReading(t *testing.T) {
 	emailCtx := context.WithValue(context.Background(), "email", userEmail)
 	handler := PostReading(fS)
 	handler.ServeHTTP(emailCtx, postReadingResp, postReadingReq)
+
+	if postReadingResp.Code != http.StatusCreated {
+		t.Fatalf("Incorrect response code; expected %d, got %d", http.StatusCreated, postReadingResp.Code)
+	}
 
 	storedReadings, err := fS.GetReadings(coreid, postTime.Add(time.Second*-1), postTime.Add(time.Second*1))
 	if err != nil {

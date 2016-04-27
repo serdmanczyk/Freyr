@@ -49,12 +49,13 @@ func main() {
 	webAuth := middleware.NewWebAuthorizer(tokenSource)
 	deviceAuth := middleware.NewDeviceAuthorizer(dbConn)
 
+	webAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
 	webApiAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
 	apiDeviceAuthed := apollo.New(middleware.Authorize(apiAuth, deviceAuth))
 
 	mux := http.NewServeMux()
 	mux.Handle("/", webApiAuthed.Then(routes.Hello()))
-	mux.Handle("/secret", webApiAuthed.Then(routes.GenerateSecret(dbConn)))
+	mux.Handle("/secret", webAuthed.Then(routes.GenerateSecret(dbConn)))
 	mux.Handle("/latest", webApiAuthed.Then(routes.GetLatestReadings(dbConn)))
 	mux.Handle("/readings", webApiAuthed.Then(routes.GetReadings(dbConn)))
 

@@ -120,9 +120,14 @@ func apiSigningString(r *http.Request) (userEmail string, signinString string) {
 	if timeInt < time.Now().Add(time.Second*-5).Unix() || timeInt > time.Now().Add(time.Second*5).Unix() {
 		return
 	}
-	// TODO: Add support for POST (include content-length)
 
-	userEmail, signinString = user, r.Method+r.URL.RawPath+datetime+user
+	userEmail = user
+	if r.Method == "POST" {
+		signinString = r.Method+r.URL.RawPath+datetime+user+strconv.FormatInt(r.ContentLength, 10)
+	} else {
+		signinString = r.Method+r.URL.RawPath+datetime+user
+	}
+
 	return
 }
 

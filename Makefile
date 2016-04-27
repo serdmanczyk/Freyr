@@ -15,7 +15,6 @@ test:
 	docker-compose -f docker-compose.test.yml -p ci up --force-recreate
 
 rundev:
-	docker-compose -p dev down
 	docker-compose -f docker-compose.debug.yml -p dev build
 	docker-compose -f docker-compose.debug.yml -p dev up --force-recreate
 

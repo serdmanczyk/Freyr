@@ -43,17 +43,22 @@ func main() {
 		log.Fatalf("Error initializing database conn: %s", err)
 	}
 
-	userAuth := middleware.NewUserAuthorizer(tokenSource)
-	userAuthed := apollo.New(middleware.Authorize(userAuth))
-
-	apiAuth := middleware.NewUserAuthorizer(tokenSource)
+	apiAuth := middleware.NewApiAuthorizer(dbConn)
 	apiAuthed := apollo.New(middleware.Authorize(apiAuth))
 
+	webAuth := middleware.NewWebAuthorizer(tokenSource)
+	deviceAuth := middleware.NewDeviceAuthorizer(dbConn)
+
+	webApiAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
+	apiDeviceAuthed := apollo.New(middleware.Authorize(apiAuth, deviceAuth))
+
 	mux := http.NewServeMux()
-	mux.Handle("/", userAuthed.Then(routes.Hello()))
-	mux.Handle("/secret", userAuthed.Then(routes.GenerateSecret(dbConn)))
-	mux.Handle("/get_readings", userAuthed.Then(routes.GetReadings(dbConn)))
-	mux.Handle("/post_reading", userAuthed.Then(routes.GetReadings(dbConn)))
+	mux.Handle("/", webApiAuthed.Then(routes.Hello()))
+	mux.Handle("/secret", webApiAuthed.Then(routes.GenerateSecret(dbConn)))
+	mux.Handle("/latest", webApiAuthed.Then(routes.GetLatestReadings(dbConn)))
+	mux.Handle("/readings", webApiAuthed.Then(routes.GetReadings(dbConn)))
+
+	mux.Handle("/reading", apiDeviceAuthed.Then(routes.PostReading(dbConn)))
 
 	mux.Handle("/rotate_secret", apiAuthed.Then(routes.RotateSecret(dbConn)))
 

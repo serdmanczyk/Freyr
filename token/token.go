@@ -1,7 +1,6 @@
 package token
 
 import (
-	"encoding/base64"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/serdmanczyk/freyr/models"
@@ -75,19 +74,19 @@ func checkExpired(t *jwt.Token) error {
 	return nil
 }
 
-func GenerateUserToken(secret models.Secret, exp time.Time, userEmail string) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	token.Claims = map[string]interface{}{
-		"user": userEmail,
+func GenerateWebToken(t TokenSource, exp time.Time, userEmail string) (string, error) {
+	return t.GenerateToken(exp, Claims{
+		"email": userEmail,
 		"exp":  exp.Format(time.RFC3339),
-	}
+	})
+}
 
-	bytes, err := base64.URLEncoding.DecodeString(string(secret))
-	if err != nil {
-		return "", nil
-	}
-
-	return token.SignedString([]byte(bytes))
+func GenerateDeviceToken(t TokenSource, exp time.Time, coreid, userEmail string) (string, error) {
+	return t.GenerateToken(exp, Claims{
+		"email": userEmail,
+		"coreid": coreid,
+		"exp":  exp.Format(time.RFC3339),
+	})
 }
 
 func ValidateUserToken(store models.SecretStore, jwtTokenString string) (Claims, error) {

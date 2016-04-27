@@ -41,15 +41,15 @@ func Authorize(auths ...Authorizer) apollo.Constructor {
 	})
 }
 
-type UserAuthorizer struct {
+type WebAuthorizer struct {
 	tokenStore token.JtwTokenGen
 }
 
-func NewUserAuthorizer(tS token.JtwTokenGen) *UserAuthorizer {
-	return &UserAuthorizer{tokenStore: tS}
+func NewWebAuthorizer(tS token.JtwTokenGen) *WebAuthorizer {
+	return &WebAuthorizer{tokenStore: tS}
 }
 
-func (u *UserAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
+func (u *WebAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
 	cookie, err := r.Cookie(oauth.CookieName)
 	if err != nil {
 		return nil
@@ -126,6 +126,19 @@ func apiSigningString(r *http.Request) (userEmail string, signinString string) {
 	return
 }
 
+func SignRequest(s models.Secret, userEmail string, r *http.Request) {
+	r.Header.Add(AuthTypeHeader, ApiAuthTypeValue)
+	r.Header.Add(AuthUserHeader, userEmail)
+	n := time.Now().Unix()
+	unixStamp := strconv.FormatInt(n, 10)
+	r.Header.Add(ApiAuthDateHeader, unixStamp)
+
+	_, signingString := apiSigningString(r)
+
+	signature := s.Sign(signingString)
+	r.Header.Add(ApiSignatureHeader, signature)
+}
+
 type DeviceAuthorizer struct {
 	secretStore models.SecretStore
 }
@@ -147,11 +160,6 @@ func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) conte
 
 	requestUserEmail := r.Header.Get(AuthUserHeader)
 	if requestUserEmail == "" {
-		return nil
-	}
-
-	err := r.ParseForm()
-	if err != nil {
 		return nil
 	}
 

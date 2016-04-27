@@ -11,7 +11,7 @@ func main() {
 	app.Usage = "cli for testing against freyr server"
 	app.Version = "0.0.1"
 	app.Commands = []cli.Command{
-		genUserToken,
+		genWebToken,
 		genDeviceToken,
 	}
 

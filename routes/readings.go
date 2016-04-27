@@ -81,6 +81,31 @@ func PostReading(s models.ReadingStore) apollo.Handler {
 	})
 }
 
+// TODO: add unit test
+func GetLatestReadings(s models.ReadingStore) apollo.Handler {
+	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		}
+
+		userEmail := getEmail(ctx)
+		readings, err := s.GetLatestReadings(userEmail)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		bytes, err := json.Marshal(readings)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		io.WriteString(w, string(bytes))
+	})
+}
+
 func GetReadings(s models.ReadingStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {

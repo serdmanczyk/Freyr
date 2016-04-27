@@ -2,11 +2,11 @@ package token
 
 import (
 	"github.com/dgrijalva/jwt-go"
-	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
-	"reflect"
 	"testing"
 	"time"
+	"reflect"
+	"github.com/serdmanczyk/freyr/fake"
 )
 
 const (
@@ -82,7 +82,7 @@ func TestWrongAlgorithm(t *testing.T) {
 	}
 }
 
-func TestValidateUserToken(t *testing.T) {
+func TestValidateWebToken(t *testing.T) {
 	userEmail := "badwolf@galifrey.unv"
 	secret, err := models.NewSecret()
 	if err != nil {
@@ -107,7 +107,7 @@ func TestValidateUserToken(t *testing.T) {
 	}
 }
 
-func TestValidateNotfoundUserToken(t *testing.T) {
+func TestValidateNotfoundWebToken(t *testing.T) {
 	userEmail := "badwolf@galifrey.unv"
 	secret, err := models.NewSecret()
 	if err != nil {
@@ -132,7 +132,7 @@ func TestValidateNotfoundUserToken(t *testing.T) {
 	}
 }
 
-func TestValidateInvalidUserToken(t *testing.T) {
+func TestValidateInvalidWebToken(t *testing.T) {
 	userEmail := "badwolf@galifrey.unv"
 	secret, err := models.NewSecret()
 	if err != nil {

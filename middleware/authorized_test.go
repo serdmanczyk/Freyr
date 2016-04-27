@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -21,26 +20,20 @@ const (
 	testEmail  = "Ardvark@comeatme.bro"
 )
 
-func testToken(tok token.TokenSource) (string, error) {
-	expiry := time.Now().Add(time.Second * 1)
-	claims := map[string]interface{}{"email": testEmail}
-	return tok.GenerateToken(expiry, claims)
-}
-
 func happyHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	email, _ := ctx.Value("email").(string)
 	w.Header().Add("Email", email)
 	io.WriteString(w, okResponse)
 }
 
-func TestUserAuthorized(t *testing.T) {
+func TestWebAuthorized(t *testing.T) {
 	secret, err := models.NewSecret()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tokGen := token.JtwTokenGen(secret)
-	uA := NewUserAuthorizer(tokGen)
+	uA := NewWebAuthorizer(tokGen)
 
 	handler := apollo.New(Authorize(uA)).ThenFunc(happyHandler)
 
@@ -49,7 +42,7 @@ func TestUserAuthorized(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	token, err := testToken(tokGen)
+	token, err := token.GenerateWebToken(tokGen, time.Now().Add(time.Second*1), testEmail)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,14 +66,14 @@ func TestUserAuthorized(t *testing.T) {
 	}
 }
 
-func TestUserNotAuthorized(t *testing.T) {
+func TestWebNotAuthorized(t *testing.T) {
 	secret, err := models.NewSecret()
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	tokGen := token.JtwTokenGen(secret)
-	uA := NewUserAuthorizer(tokGen)
+	uA := NewWebAuthorizer(tokGen)
 
 	handler := apollo.New(Authorize(uA)).ThenFunc(happyHandler)
 
@@ -114,19 +107,7 @@ func TestApiAuthorizer(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	authorizeRequest.Header.Add(AuthTypeHeader, ApiAuthTypeValue)
-	authorizeRequest.Header.Add(AuthUserHeader, userEmail)
-	n := time.Now().Unix()
-	unixStamp := strconv.FormatInt(n, 10)
-	authorizeRequest.Header.Add(ApiAuthDateHeader, unixStamp)
-
-	_, signingString := apiSigningString(authorizeRequest)
-	if signingString == "" {
-		t.Fatal("Failure generating signing string")
-	}
-
-	signature := secret.Sign(signingString)
-	authorizeRequest.Header.Add(ApiSignatureHeader, signature)
+	SignRequest(secret, userEmail, authorizeRequest)
 
 	handler := apollo.New(Authorize(aa)).ThenFunc(happyHandler)
 
@@ -170,11 +151,7 @@ func TestDeviceAuthorizer(t *testing.T) {
 	authorizeRequest.Header.Add(AuthUserHeader, userEmail)
 	authorizeRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	tokGen := token.JtwTokenGen(secret)
-	token, err := tokGen.GenerateToken(time.Now().Add(time.Second), token.Claims{
-		"coreid": coreId,
-		"email":  userEmail,
-	})
+	token, err := token.GenerateDeviceToken(token.JtwTokenGen(secret), time.Now().Add(time.Second), coreId, userEmail)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-var userUsage = `Generate a user token, useable as a browser cookie.
+var webTokenUsage = `Generate a user token, useable as a browser cookie.
 	secret email [-expiration]`
 
-var genUserToken = cli.Command{
+var genWebToken = cli.Command{
 	Name:  "genusertoken",
-	Usage: userUsage,
+	Usage: webTokenUsage,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "expiration",
@@ -21,10 +21,10 @@ var genUserToken = cli.Command{
 			Usage: "Expiration time of token",
 		},
 	},
-	Action: prepareGenUserToken,
+	Action: prepareGenWebToken,
 }
 
-func prepareGenUserToken(c *cli.Context) {
+func prepareGenWebToken(c *cli.Context) {
 	args := c.Args()
 	if len(args) != 2 {
 		fmt.Println(c.Command.Usage)
@@ -39,20 +39,17 @@ func prepareGenUserToken(c *cli.Context) {
 		panic(err)
 	}
 
-	fmt.Println(generateUserToken(secret, email, expiry))
+	fmt.Println(generateWebToken(secret, email, expiry))
 }
 
-func generateUserToken(secret, email string, expiry time.Time) string {
+func generateWebToken(secret, email string, expiry time.Time) string {
 	parsedSecret, err := models.SecretFromBase64(secret)
 	if err != nil {
 		panic(err)
 	}
 
 	tkGen := token.JtwTokenGen(parsedSecret)
-
-	token, err := tkGen.GenerateToken(expiry, token.Claims{
-		"email": email,
-	})
+	token, err := token.GenerateWebToken(tkGen, expiry, email)
 	if err != nil {
 		panic(err)
 	}

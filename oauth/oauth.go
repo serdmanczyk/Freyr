@@ -36,10 +36,7 @@ func checkOauthClaim(claims map[string]interface{}) bool {
 
 func setUserCookie(w http.ResponseWriter, t token.TokenSource, u *models.User) error {
 	expiry := time.Now().Add(time.Hour * 744) // ~1 month
-	claims := map[string]interface{}{
-		"email": u.Email,
-	}
-	token, err := t.GenerateToken(expiry, claims)
+	token, err := token.GenerateWebToken(t, expiry, u.Email)
 	if err != nil {
 		return err
 	}

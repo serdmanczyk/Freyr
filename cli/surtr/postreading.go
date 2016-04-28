@@ -68,7 +68,7 @@ func postReading(c *cli.Context) {
 		exit(err)
 	}
 
-	frey, err := client.New(domain, email, secret)
+	signator, err := client.NewApiSignator(email, secret)
 	if err != nil {
 		exit(err)
 	}
@@ -78,7 +78,7 @@ func postReading(c *cli.Context) {
 		for i := 0; i < number; i++ {
 			reading := fake.RandReading(email, coreid, postedTime)
 
-			err = frey.PostReading(reading)
+			err = client.PostReading(signator, domain, reading)
 			if err != nil {
 				exit(err)
 			}
@@ -105,7 +105,7 @@ func postReading(c *cli.Context) {
 		Battery:     battery,
 	}
 
-	err = frey.PostReading(reading)
+	err = client.PostReading(signator, domain, reading)
 	if err != nil {
 		exit(err)
 	}

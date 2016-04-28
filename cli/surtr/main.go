@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codegangsta/cli"
 	"os"
-	"fmt"
 )
 
 func main() {
@@ -15,6 +15,7 @@ func main() {
 		genWebToken,
 		genDeviceToken,
 		PostReading,
+		GetLatest,
 	}
 
 	app.Run(os.Args)

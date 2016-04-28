@@ -55,7 +55,6 @@ func (r Reading) DataJSON() string {
 	return string(bytes)
 }
 
-
 func (a Reading) Compare(b Reading) bool {
 	if a.UserEmail != b.UserEmail {
 		return false

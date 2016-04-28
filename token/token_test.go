@@ -2,11 +2,11 @@ package token
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
+	"reflect"
 	"testing"
 	"time"
-	"reflect"
-	"github.com/serdmanczyk/freyr/fake"
 )
 
 const (

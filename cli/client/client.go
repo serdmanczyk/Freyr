@@ -7,51 +7,77 @@ import (
 	"fmt"
 	"github.com/serdmanczyk/freyr/middleware"
 	"github.com/serdmanczyk/freyr/models"
+	"github.com/serdmanczyk/freyr/oauth"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-	//"net/http/httputil"
 )
 
-type ApiClient struct {
-	client    *http.Client
-	Domain    string
+var client *http.Client
+
+func init() {
+	client = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+}
+
+type Signator interface {
+	Sign(r *http.Request)
+}
+
+type WebSignator struct {
+	Token string
+}
+
+func (s WebSignator) Sign(r *http.Request) {
+	r.Header.Add("Cookie", oauth.CookieName+"="+s.Token)
+}
+
+type ApiSignator struct {
 	UserEmail string
 	Secret    models.Secret
 }
 
-func New(domain, userEmail, base64Secret string) (*ApiClient, error) {
+func NewApiSignator(userEmail, base64Secret string) (*ApiSignator, error) {
 	secret, err := models.SecretFromBase64(base64Secret)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: remove this when we get a legit cert, or make optional?
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-
-	return &ApiClient{
-		client:    client,
-		Domain:    domain,
+	return &ApiSignator{
 		UserEmail: userEmail,
 		Secret:    secret,
 	}, nil
 }
 
-func (c *ApiClient) GetLatest() ([]models.Reading, error) {
+func (s ApiSignator) Sign(r *http.Request) {
+	middleware.SignRequest(s.Secret, s.UserEmail, r)
+}
+
+type DeviceSignator struct {
+	UserEmail string
+	Token     string
+}
+
+func (s *DeviceSignator) Sign(r *http.Request) {
+	r.Header.Add(middleware.AuthTypeHeader, middleware.DeviceAuthTypeValue)
+	r.Header.Add(middleware.AuthUserHeader, s.UserEmail)
+}
+
+func GetLatest(s Signator, domain string) ([]models.Reading, error) {
 	var readings []models.Reading
 
-	req, err := http.NewRequest("GET", c.Domain+"/api/latest", nil)
+	req, err := http.NewRequest("GET", domain+"/api/latest", nil)
 	if err != nil {
 		return readings, err
 	}
 
-	middleware.SignRequest(c.Secret, c.UserEmail, req)
-	resp, err := c.client.Do(req)
+	s.Sign(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return readings, err
 	}
@@ -61,7 +87,7 @@ func (c *ApiClient) GetLatest() ([]models.Reading, error) {
 		return readings, errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(readings)
+	err = json.NewDecoder(resp.Body).Decode(&readings)
 	if err != nil {
 		return readings, err
 	}
@@ -69,22 +95,22 @@ func (c *ApiClient) GetLatest() ([]models.Reading, error) {
 	return readings, nil
 }
 
-func (c *ApiClient) GetReadings(coreid string, start, end time.Time) ([]models.Reading, error) {
+func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]models.Reading, error) {
 	var readings []models.Reading
 
 	query := url.Values{}
 	query.Add("start", start.Format(time.RFC3339))
 	query.Add("end", end.Format(time.RFC3339))
 	query.Add("core", coreid)
-	reqUrl := c.Domain + "/api/readings?" + query.Encode()
+	reqUrl := domain + "/api/readings?" + query.Encode()
 
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
 		return readings, err
 	}
 
-	middleware.SignRequest(c.Secret, c.UserEmail, req)
-	resp, err := c.client.Do(req)
+	s.Sign(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return readings, err
 	}
@@ -94,7 +120,7 @@ func (c *ApiClient) GetReadings(coreid string, start, end time.Time) ([]models.R
 		return readings, errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(readings)
+	err = json.NewDecoder(resp.Body).Decode(&readings)
 	if err != nil {
 		return readings, err
 	}
@@ -102,7 +128,7 @@ func (c *ApiClient) GetReadings(coreid string, start, end time.Time) ([]models.R
 	return readings, nil
 }
 
-func (c *ApiClient) PostReading(reading models.Reading) error {
+func PostReading(s Signator, domain string, reading models.Reading) error {
 	form := url.Values{}
 	form.Set("event", "post_reading")
 	form.Set("coreid", reading.CoreId)
@@ -111,14 +137,14 @@ func (c *ApiClient) PostReading(reading models.Reading) error {
 
 	formStr := form.Encode()
 	reqBody := strings.NewReader(formStr)
-	req, err := http.NewRequest("POST", c.Domain+"/api/reading", reqBody)
+	req, err := http.NewRequest("POST", domain+"/api/reading", reqBody)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.ContentLength = int64(len(formStr))
-	middleware.SignRequest(c.Secret, c.UserEmail, req)
+	s.Sign(req)
 
 	//bytes, err := httputil.DumpRequest(req, true)
 	//if err != nil {
@@ -126,7 +152,7 @@ func (c *ApiClient) PostReading(reading models.Reading) error {
 	//}
 	//fmt.Println(string(bytes))
 
-	resp, err := c.client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -144,14 +170,14 @@ func (c *ApiClient) PostReading(reading models.Reading) error {
 	return nil
 }
 
-func (c *ApiClient) RotateSecret() (string, error) {
+func RotateSecret(s Signator) (string, error) {
 	req, err := http.NewRequest("POST", "/reading", nil)
 	if err != nil {
 		return "", err
 	}
 
-	middleware.SignRequest(c.Secret, c.UserEmail, req)
-	resp, err := c.client.Do(req)
+	s.Sign(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}

@@ -77,15 +77,15 @@ func checkExpired(t *jwt.Token) error {
 func GenerateWebToken(t TokenSource, exp time.Time, userEmail string) (string, error) {
 	return t.GenerateToken(exp, Claims{
 		"email": userEmail,
-		"exp":  exp.Format(time.RFC3339),
+		"exp":   exp.Format(time.RFC3339),
 	})
 }
 
 func GenerateDeviceToken(t TokenSource, exp time.Time, coreid, userEmail string) (string, error) {
 	return t.GenerateToken(exp, Claims{
-		"email": userEmail,
+		"email":  userEmail,
 		"coreid": coreid,
-		"exp":  exp.Format(time.RFC3339),
+		"exp":    exp.Format(time.RFC3339),
 	})
 }
 

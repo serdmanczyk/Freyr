@@ -123,9 +123,9 @@ func apiSigningString(r *http.Request) (userEmail string, signinString string) {
 
 	userEmail = user
 	if r.Method == "POST" {
-		signinString = r.Method+r.URL.RawPath+datetime+user+strconv.FormatInt(r.ContentLength, 10)
+		signinString = r.Method + r.URL.RawPath + datetime + user + strconv.FormatInt(r.ContentLength, 10)
 	} else {
-		signinString = r.Method+r.URL.RawPath+datetime+user
+		signinString = r.Method + r.URL.RawPath + datetime + user
 	}
 
 	return

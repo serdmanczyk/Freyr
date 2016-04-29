@@ -36,7 +36,7 @@ func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 		return models.Reading{}, NoReading
 	}
 
-	readingData := make(map[string]float32)
+	readingData := make(map[string]float64)
 	err := json.Unmarshal([]byte(dataStr), &readingData)
 	if err != nil {
 		return models.Reading{}, err

@@ -13,11 +13,11 @@ func init() {
 	randGen = rand.New(rand.NewSource(time.Now().Unix()))
 }
 
-func FloatBetween(a, b float32) float32 {
+func FloatBetween(a, b float64) float64 {
 	if b <= a {
 		return 0.0
 	}
-	return (randGen.Float32() * (b - a)) + a
+	return (randGen.Float64() * (b - a)) + a
 }
 
 func RandReading(userEmail, core string, posted time.Time) models.Reading {

@@ -21,11 +21,11 @@ type Reading struct {
 	UserEmail   string    `json:"user"`
 	CoreId      string    `json:"coreid"`
 	Posted      time.Time `json:"posted"`
-	Temperature float32   `json:"temperature"`
-	Humidity    float32   `json:"humidity"`
-	Moisture    float32   `json:"moisture"`
-	Light       float32   `json:"light"`
-	Battery     float32   `json:"battery"`
+	Temperature float64   `json:"temperature"`
+	Humidity    float64   `json:"humidity"`
+	Moisture    float64   `json:"moisture"`
+	Light       float64   `json:"light"`
+	Battery     float64   `json:"battery"`
 }
 
 func ReadingFromJSON(userEmail, coreId string, posted time.Time, jsonStr string) (Reading, error) {
@@ -43,7 +43,7 @@ func ReadingFromJSON(userEmail, coreId string, posted time.Time, jsonStr string)
 }
 
 func (r Reading) DataJSON() string {
-	data := map[string]float32{
+	data := map[string]float64{
 		"temperature": r.Temperature,
 		"humidity":    r.Humidity,
 		"moisture":    r.Moisture,
@@ -69,7 +69,7 @@ func (a Reading) Compare(b Reading) bool {
 	}
 
 	for _, pair := range []struct {
-		a, b float32
+		a, b float64
 	}{
 		{a.Temperature, b.Temperature},
 		{a.Humidity, b.Humidity},
@@ -85,7 +85,7 @@ func (a Reading) Compare(b Reading) bool {
 	return true
 }
 
-func floatCompare(a, b float32) bool {
+func floatCompare(a, b float64) bool {
 	if math.Abs(float64(a-b)) < epsilon {
 		return true
 	}

@@ -1,0 +1,39 @@
+version: '2'
+services:
+  surtr:
+    command: go test -tags=acceptance
+    depends_on:
+      - nginx
+    env_file: ./cmd/surtr/.env
+    image: golang
+    links:
+      - nginx
+    volumes:
+      - $GOPATH/src/:/go/src/
+      - ./:/go/src/github.com/serdmanczyk/freyr/
+    working_dir: /go/src/github.com/serdmanczyk/freyr/cmd/surtr
+  nginx:
+    build:
+      context: ./nginx/
+    image: serdmanczyk/freyrnginx
+    links:
+      - freyr
+    ports:
+      - "8080:80"
+      - "8443:443"
+  freyr:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    env_file: .env
+    image: serdmanczyk/freyr
+    links:
+      - postgres
+    restart: always
+  postgres:
+    build:
+      context: ./postgres/
+    image: serdmanczyk/freyrpostgres
+    env_file: ./postgres/.env
+    restart: always

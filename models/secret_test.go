@@ -1,6 +1,10 @@
 package models
 
 import (
+	"bytes"
+	"encoding/base64"
+	"io"
+	"strings"
 	"testing"
 )
 
@@ -65,6 +69,34 @@ func TestBase64Encoding(t *testing.T) {
 
 	if !secret.Verify(dummySigningContents, newSignature) {
 		t.Fatal("Inconsistency in verification between decoded/re-encoded secret")
+	}
+}
+
+func TestBuffer(t *testing.T) {
+	signingString := "blahblahblah"
+	secret, err := NewSecret()
+	if err != nil {
+		t.Fatal("Error creating Secret %s", err.Error())
+	}
+
+	signature := secret.Sign(signingString)
+
+	secretString := secret.Encode()
+
+	var dest bytes.Buffer
+
+	reader := strings.NewReader(secretString)
+
+	decoder := base64.NewDecoder(base64.URLEncoding, reader)
+	_, err = io.Copy(&dest, decoder)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	transcribed := Secret(dest.Bytes())
+	transSign := transcribed.Sign(signingString)
+	if signature != transSign {
+		t.Fatalf("Signatures do not match between original and transcribed secret: %s %s", signature, transSign)
 	}
 }
 

@@ -43,13 +43,12 @@ func main() {
 		log.Fatalf("Error initializing database conn: %s", err)
 	}
 
-	apiAuth := middleware.NewApiAuthorizer(dbConn)
-	apiAuthed := apollo.New(middleware.Authorize(apiAuth))
-
 	webAuth := middleware.NewWebAuthorizer(tokenSource)
+	apiAuth := middleware.NewApiAuthorizer(dbConn)
 	deviceAuth := middleware.NewDeviceAuthorizer(dbConn)
 
-	webAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
+	apiAuthed := apollo.New(middleware.Authorize(apiAuth))
+	webAuthed := apollo.New(middleware.Authorize(webAuth))
 	webApiAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
 	apiDeviceAuthed := apollo.New(middleware.Authorize(apiAuth, deviceAuth))
 

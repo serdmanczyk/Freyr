@@ -23,7 +23,7 @@ create table if not exists readings (
 );
 
  insert into users (email, full_name, family_name, given_name, gender, locale, secret) values
-     ('noone@nothing.com', 'demo user', 'user', 'demo', 'androgenous', 'en', 'UYbvgLxhaCBMDi_A4LdcqejGTij0vcoNsPjax18HVn4=');
+     ('noone@nothing.com', 'demo user', 'user', 'demo', 'androgenous', 'en', '');
 
 -- insert into users (email, full_name, family_name, given_name, gender) values
 --     ('serdmanczyk@gmail.com', 'steven erdmanczyk', 'erdmanczyk', 'steven', 'mail'),

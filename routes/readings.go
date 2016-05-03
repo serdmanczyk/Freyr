@@ -104,6 +104,7 @@ func GetLatestReadings(s models.ReadingStore) apollo.Handler {
 			return
 		}
 
+		w.Header().Add("Content-Type", "application/json")
 		io.WriteString(w, string(bytes))
 	})
 }
@@ -138,6 +139,7 @@ func GetReadings(s models.ReadingStore) apollo.Handler {
 			return
 		}
 
+		w.Header().Add("Content-Type", "application/json")
 		io.WriteString(w, string(bytes))
 	})
 }

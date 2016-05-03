@@ -13,7 +13,7 @@ import (
 
 var (
 	defaultExp = time.Now().Add(time.Hour).Format(time.RFC3339)
-	startTime  = time.Now().Format(time.RFC3339)
+	startTime  = time.Now().In(time.UTC).Format(time.RFC3339)
 )
 
 func main() {

@@ -23,37 +23,46 @@ func main() {
 		c.ErrPrintln("Please define type of token to generate, [web, core]")
 	})
 
+	get := surtr.DefineSubCommand("get", "get commands", func(c cli.Command) {
+		c.ErrPrintln("Define what you want to get [latest, between]")
+	})
+
+	post := surtr.DefineSubCommand("post", "post commands", func(c cli.Command) {
+		c.ErrPrintln("Define what you want to post [reading]")
+	})
+
+	delete := surtr.DefineSubCommand("delete", "deletecommands", func(c cli.Command) {
+		c.ErrPrintln("Define what you want to delete [readings]")
+	})
+
+	delete.DefineSubCommand("readings", "delete readings", deleteBetween, "domain", "secret", "email", "coreid", "start", "end")
+
 	webToken := token.DefineSubCommand("web", "generate web token", genWebToken, "email", "secret")
 	webToken.DefineStringFlag("exp", defaultExp, "expiration date of token")
 
 	coreToken := token.DefineSubCommand("core", "generate core token", genCoreToken, "email", "secret", "coreid")
 	coreToken.DefineStringFlag("exp", defaultExp, "expiration date of token")
 
-	get := surtr.DefineSubCommand("get", "get commands", func(c cli.Command) {
-		c.ErrPrintln("Define what you want to get [latest, between]")
-	})
-
 	get.DefineSubCommand("latest", "get latest readings for cores", getLatest, "domain", "secret", "email")
 	get.DefineSubCommand("between", "get latest readings for cores", getBetween, "domain", "secret", "email", "coreid", "start", "end")
-
-	post := surtr.DefineSubCommand("post", "post commands", func(c cli.Command) {
-		c.ErrPrintln("Define what you want to post [reading]")
-	})
 
 	pr := post.DefineSubCommand("reading", "post a reading", postReading, "domain", "secret", "email", "coreid")
 	pr.DefineStringFlag("posted", startTime, "Time of reading's posting")
 	pr.DefineFloat64Flag("temperature", float64(fake.FloatBetween(10.0, 30.0)), "temperature to post")
-	pr.AliasFlag('t', "temperature")
 	pr.DefineFloat64Flag("humidity", float64(fake.FloatBetween(30.0, 90.0)), "humidity percentage to post")
-	pr.AliasFlag('h', "humidity")
 	pr.DefineFloat64Flag("moisture", float64(fake.FloatBetween(0.0, 90.0)), "moisture level to post")
-	pr.AliasFlag('m', "moisture")
 	pr.DefineFloat64Flag("light", float64(fake.FloatBetween(0.0, 120.0)), "light level to post")
-	pr.AliasFlag('l', "light")
 	pr.DefineFloat64Flag("battery", float64(fake.FloatBetween(0.0, 100.0)), "battery levl to post")
-	pr.AliasFlag('b', "battery")
 	pr.DefineInt64Flag("number", 1, "Number of readings to post")
+	pr.DefineInt64Flag("step", int64(time.Minute*15/time.Second), "Step, in time, between readings")
+	pr.AliasFlag('p', "posted")
+	pr.AliasFlag('t', "temperature")
+	pr.AliasFlag('h', "humidity")
+	pr.AliasFlag('m', "moisture")
+	pr.AliasFlag('l', "light")
+	pr.AliasFlag('b', "battery")
 	pr.AliasFlag('n', "number")
+	pr.AliasFlag('s', "step")
 
 	surtr.Start()
 }
@@ -141,6 +150,35 @@ func getBetween(c cli.Command) {
 	}
 }
 
+func deleteBetween(c cli.Command) {
+	domain := c.Param("domain").String()
+	secret := c.Param("secret").String()
+	email := c.Param("email").String()
+	coreid := c.Param("coreid").String()
+	start := c.Param("start").String()
+	end := c.Param("end").String()
+
+	signator, err := client.NewApiSignator(email, secret)
+	if err != nil {
+		panic(err)
+	}
+
+	startTime, err := time.Parse(time.RFC3339, start)
+	if err != nil {
+		panic(err)
+	}
+
+	endTime, err := time.Parse(time.RFC3339, end)
+	if err != nil {
+		panic(err)
+	}
+
+	err = client.DeleteReadings(signator, domain, coreid, startTime, endTime)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func getLatest(c cli.Command) {
 	domain := c.Param("domain").String()
 	email := c.Param("email").String()
@@ -184,26 +222,36 @@ func postReading(c cli.Command) {
 	moisture := c.Flag("moisture").Get().(float64)
 	light := c.Flag("light").Get().(float64)
 	battery := c.Flag("battery").Get().(float64)
+	number := c.Flag("number").Get().(int64)
+	step := c.Flag("step").Get().(int64)
 
-	reading := models.Reading{
-		UserEmail:   email,
-		CoreId:      coreid,
-		Posted:      postedTime,
-		Temperature: temperature,
-		Humidity:    humidity,
-		Moisture:    moisture,
-		Light:       light,
-		Battery:     battery,
+	readingGen := fake.ReadingGen(email, coreid, postedTime, time.Duration(step)*time.Second)
+	var reading models.Reading
+
+	if number == 1 {
+		reading = models.Reading{
+			UserEmail:   email,
+			CoreId:      coreid,
+			Posted:      postedTime,
+			Temperature: temperature,
+			Humidity:    humidity,
+			Moisture:    moisture,
+			Light:       light,
+			Battery:     battery,
+		}
+
+	} else {
+		reading = readingGen()
 	}
 
-	number := c.Flag("number").Get().(int64)
 	for i := 0; i < int(number); i++ {
 		err = client.PostReading(signator, domain, reading)
 		if err != nil {
 			panic(err)
 		}
 
-		postedTime = postedTime.Add(time.Second)
-		reading = fake.RandReading(email, coreid, postedTime)
+		//postedTime = postedTime.Add(time.Second)
+		//reading = fake.RandReading(email, coreid, postedTime)
+		reading = readingGen()
 	}
 }

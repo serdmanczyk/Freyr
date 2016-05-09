@@ -134,6 +134,32 @@ func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]mod
 	return readings, nil
 }
 
+func DeleteReadings(s Signator, domain, coreid string, start, end time.Time) error {
+	query := url.Values{}
+	query.Add("start", start.Format(time.RFC3339))
+	query.Add("end", end.Format(time.RFC3339))
+	query.Add("core", coreid)
+	reqUrl := domain + "/api/delete_readings?" + query.Encode()
+
+	req, err := http.NewRequest("DELETE", reqUrl, nil)
+	if err != nil {
+		return err
+	}
+
+	s.Sign(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
+	}
+
+	return nil
+}
+
 func PostReading(s Signator, domain string, reading models.Reading) error {
 	form := url.Values{}
 	form.Set("event", "post_reading")

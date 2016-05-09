@@ -141,3 +141,47 @@ func TestDBGetLatest(t *testing.T) {
 		t.Fatalf("Incorrect reading returned; expected %v, got %v", latestInputUserOneCoreTwo, latestOutputUserOneCoreTwo)
 	}
 }
+
+func TestDeleteReadings(t *testing.T) {
+	userEmail := "loki@niflheim.unv"
+	core := "6666666666"
+
+	err := db.StoreUser(models.User{
+		Email: userEmail,
+	})
+
+	start := time.Now()
+	end := start.Add(time.Hour * 24 * 7)
+	step := time.Second * 60 * 15
+	readingGen := fake.ReadingGen(userEmail, core, start, step)
+
+	for now := start; now.Before(end); now = now.Add(step) {
+		err := db.StoreReading(readingGen())
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	readings, err := db.GetReadings(core, start, end)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(readings) == 0 {
+		t.Fatal("No readings inserted into database")
+	}
+
+	err = db.DeleteReadings(core, start, end)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	readings, err = db.GetReadings(core, start, end)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(readings) != 0 {
+		t.Fatalf("Readings still remain after delete: %d, %v", len(readings), readings)
+	}
+}

@@ -60,10 +60,13 @@ func main() {
 
 	mux.Handle("/reading", apiDeviceAuthed.Then(routes.PostReading(dbConn)))
 
+	mux.Handle("/delete_readings", apiAuthed.Then(routes.DeleteReadings(dbConn)))
 	mux.Handle("/rotate_secret", apiAuthed.Then(routes.RotateSecret(dbConn)))
 
 	mux.Handle("/authorize", oauth.HandleAuthorize(googleOauth, tokenSource))
 	mux.Handle("/oauth2callback", oauth.HandleOAuth2Callback(googleOauth, tokenSource, dbConn))
+	mux.Handle("/logout", oauth.LogOut())
+	mux.Handle("/demo", oauth.SetDemoUser(tokenSource, dbConn))
 
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())

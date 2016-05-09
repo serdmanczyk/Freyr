@@ -24,9 +24,11 @@ rundev:
 	docker-compose -f docker-compose.debug.yml -p dev build
 	docker-compose -f docker-compose.debug.yml -p dev up --force-recreate
 
-runstatic:
+buildstatic:
 	docker-compose build
-	docker-compose up
+
+runstatic:
+	docker-compose up -d
 
 integration:
 	docker-compose -f docker-compose.integration.yml -p integration up --force-recreate

@@ -15,6 +15,10 @@ A pet project to design a simple garden sensor and custom server for aggregating
 
 The intent is to merge my interests in sustainability, backend system software development, embedded programming, and electronics tinkering while providing the opportunity to practice with programming techniques I may not get to use as much as I like during my day-job.
 
+# Where?
+
+Running @ [https://freyr.erdmanczyk.com][freyr-erdmanczyk]
+
 # Etymology
 
 [Freyr (Fray-ur)][freyr], the Norse god associated with fertility, sunshine, and fair weather.  The CLI testing tool is named after [Surtr][surtr], the fire giant who battles Freyr to his death at Ragnarök.
@@ -25,3 +29,4 @@ The symbol is the Futhark [ᚠ (Fehu)][fehu] (Norse 'F') imposed on a leaf, rese
 [freyr]: https://en.wikipedia.org/wiki/Freyr
 [fehu]: https://en.wikipedia.org/wiki/Fehu
 [particle]: https://www.particle.io/
+[freyr-erdmanczyk]: https://freyr.erdmanczyk.com

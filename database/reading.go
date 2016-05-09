@@ -53,6 +53,16 @@ func (db DB) StoreReading(reading models.Reading) error {
 	return nil
 }
 
+func (db DB) DeleteReadings(core string, start, end time.Time) error {
+	_, err := db.Exec("delete from readings where coreid = $1 and posted between $2 and $3",
+		core, start, end)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (db DB) GetReadings(core string, start, end time.Time) ([]models.Reading, error) {
 	var readings []models.Reading
 

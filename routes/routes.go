@@ -1,11 +1,11 @@
 package routes
 
 import (
+	"encoding/json"
 	"github.com/cyclopsci/apollo"
+	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/net/context"
 	"net/http"
-	"github.com/serdmanczyk/freyr/models"
-	"encoding/json"
 )
 
 func getEmail(ctx context.Context) string {

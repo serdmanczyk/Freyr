@@ -158,4 +158,18 @@ func TestAcceptance(t *testing.T) {
 			t.Fatalf("Returned reading in API response shouldn't exist %v", returnedReading)
 		}
 	}
+
+	err = client.DeleteReadings(apiSignator, c.Domain, coreId, startTime, postTime)
+	if err != nil {
+		t.Fatalf("Error deleting readings: %s", err.Error())
+	}
+
+	readings, err = client.GetReadings(apiSignator, c.Domain, coreId, startTime, postTime)
+	if err == nil {
+		t.Fatalf("Error calling get on readings by date span, should be 404; got: ", err.Error())
+	}
+
+	//if len(readings) != 0 {
+	//	t.Fatalf("Readings still remain after delete: %d %v", len(readings), readings)
+	//}
 }

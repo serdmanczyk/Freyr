@@ -15,6 +15,7 @@ type ReadingStore interface {
 	StoreReading(reading Reading) error
 	GetLatestReadings(userEmail string) ([]Reading, error)
 	GetReadings(core string, start, end time.Time) ([]Reading, error)
+	DeleteReadings(core string, start, end time.Time) error
 }
 
 type Reading struct {

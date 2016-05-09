@@ -3,6 +3,43 @@
  * Code licensed under the Apache License v2.0.
  * For details, see http://www.apache.org/licenses/LICENSE-2.0.
  */
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    /*padding-bottom: 100%; /* aspect ratio */*/
+    /*vertical-align: top;*/
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+.freyr-chart {
+    border: 1px solid #42dca3;
+    background-color: rgba(120, 120, 120, 0.45);
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
 
 body {
     width: 100%;
@@ -307,7 +344,7 @@ a:focus {
 .btn-default {
     border: 1px solid #42dca3;
     color: #42dca3;
-    background-color: transparent;
+    background-color: rgba(0, 0, 0, 0.45);
 }
 
 .btn-default:hover,

@@ -22,6 +22,6 @@ func (f *Oauth) GetExchangeToken(r *http.Request) (*oauth2.Token, error) {
 	return &oauth2.Token{}, nil
 }
 
-func (f *Oauth) GetUserData(tok *oauth2.Token) (*models.User, error) {
-	return &models.User{Email: f.Email}, nil
+func (f *Oauth) GetUserData(tok *oauth2.Token) (models.User, error) {
+	return models.User{Email: f.Email}, nil
 }

@@ -79,7 +79,6 @@ func PostReading(s models.ReadingStore) apollo.Handler {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		return
 	})
 }
 
@@ -106,6 +105,29 @@ func GetLatestReadings(s models.ReadingStore) apollo.Handler {
 
 		w.Header().Add("Content-Type", "application/json")
 		io.WriteString(w, string(bytes))
+	})
+}
+
+func DeleteReadings(s models.ReadingStore) apollo.Handler {
+	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != "DELETE" {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		}
+
+		start, end, core, err := getReadingsParams(ctx, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		err = s.DeleteReadings(core, start, end)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
 

@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"encoding/json"
 	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -47,17 +48,17 @@ func (g GoogleOauth) GetExchangeToken(r *http.Request) (*oauth2.Token, error) {
 	return tok, nil
 }
 
-func (g GoogleOauth) GetUserData(tok *oauth2.Token) (*models.User, error) {
+func (g GoogleOauth) GetUserData(tok *oauth2.Token) (user models.User, err error) {
 	client := g.Config.Client(oauth2.NoContext, tok)
 	resp, err := client.Get(profileInfoURL)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	user, err := models.UserFromJson(resp.Body)
+	err = json.NewDecoder(resp.Body).Decode(&user)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return user, nil
+	return
 }

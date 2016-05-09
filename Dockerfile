@@ -1,5 +1,5 @@
 FROM centurylink/ca-certs
 
 COPY freyr /
-EXPOSE 8080
+EXPOSE 80
 ENTRYPOINT ["/freyr"]

@@ -25,6 +25,7 @@ type User struct {
 	Locale     string `json:"locale"`
 }
 
+//TODO: remove this, jsut use NewDecoder(r io.Reader)
 func UserFromJson(r io.Reader) (*User, error) {
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {

@@ -1,5 +1,8 @@
 var path = require("path");
+var webpack = require('webpack');
 var ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+var PROD = JSON.parse(process.env.PROD_ENV || '0');
 
 var config = {
   entry: path.resolve(__dirname, 'js/app.jsx'),
@@ -40,7 +43,13 @@ var config = {
       },
     ]
   },
-    plugins: [
+    plugins: PROD ? [
+        new ExtractTextPlugin("[name].css")
+    ,
+      new webpack.optimize.UglifyJsPlugin({
+          compress: { warnings: false }
+      })
+    ] : [
         new ExtractTextPlugin("[name].css")
     ]
 };

@@ -19,6 +19,10 @@ The intent is to merge my interests in sustainability, backend system software d
 
 Running @ [https://freyr.erdmanczyk.com][freyr-erdmanczyk]
 
+![login](repo_files/Screenshot 2016-05-09 23.17.39.png "Freyr")
+![latest](repo_files/Screenshot 2016-05-09 23.17.48.png "Freyr")
+![chart](repo_files/Screenshot 2016-05-09 23.18.04.png "Freyr")
+
 # Etymology
 
 [Freyr (Fray-ur)][freyr], the Norse god associated with fertility, sunshine, and fair weather.  The CLI testing tool is named after [Surtr][surtr], the fire giant who battles Freyr to his death at Ragnarök.

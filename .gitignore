@@ -1,5 +1,4 @@
 *.env
 *.DS_Store
-nginx/conf/server-cert.pem
-nginx/conf/server-key.pem
+*.pem
 nginx/static/node_modules

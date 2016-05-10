@@ -48,6 +48,10 @@ func (f *ReadingStore) GetLatestReadings(userEmail string) (readings []models.Re
 	return
 }
 
+func (f *ReadingStore) DeleteReadings(core string, start, end time.Time) error {
+	return errors.New("don't need this yet")
+}
+
 func (f *ReadingStore) GetReadings(core string, start, end time.Time) ([]models.Reading, error) {
 	filtered := models.FilterReadings(f.readings, func(r models.Reading) bool {
 		if r.CoreId == core && r.Posted.After(start) && r.Posted.Before(end) {

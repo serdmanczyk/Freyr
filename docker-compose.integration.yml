@@ -4,7 +4,6 @@ services:
     restart: always
     image: golang
     volumes:
-      - $GOPATH/src/:/go/src/
       - ./:/go/src/github.com/serdmanczyk/freyr/
     working_dir: /go/src/github.com/serdmanczyk/freyr/
     command: go test ./... -tags=integration
@@ -12,6 +11,8 @@ services:
       - postgres
     depends_on:
       - postgres
+    environment:
+      GOPATH: /go/src/github.com/serdmanczyk/freyr/vendor/:/go
   postgres:
     build: 
       context: ./postgres/

@@ -14,8 +14,9 @@ services:
     restart: always
     image: golang
     volumes:
-      - $GOPATH/src/:/go/src/
       - ./:/go/src/github.com/serdmanczyk/freyr/
+    environment:
+      GOPATH: /go/src/github.com/serdmanczyk/freyr/vendor/:/go
     working_dir: /go/src/github.com/serdmanczyk/freyr/
     command: go run main.go
     env_file: .env

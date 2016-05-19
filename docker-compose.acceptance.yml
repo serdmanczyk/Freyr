@@ -9,9 +9,10 @@ services:
     links:
       - nginx
     volumes:
-      - $GOPATH/src/:/go/src/
       - ./:/go/src/github.com/serdmanczyk/freyr/
     working_dir: /go/src/github.com/serdmanczyk/freyr/cmd/surtr
+    environment:
+      GOPATH: /go/src/github.com/serdmanczyk/freyr/vendor/:/go
   nginx:
     build:
       context: ./nginx/

@@ -5,22 +5,22 @@ default: freyr
 pwd := $(shell pwd)
 
 freyr:
-	docker run \
+	GO15VENDOREXPERIMENT=1 docker run \
 		-e CGO_ENABLED=0 \
 		-e GOOS=linux \
-		-v $(GOPATH)/src/:/go/src/ \
+		-e "GOPATH=/go/src/github.com/serdmanczyk/freyr/vendor/:/go" \
 		-v $(pwd):/go/src/github.com/serdmanczyk/freyr/ \
 		-w /go/src/github.com/serdmanczyk/freyr/ \
-		golang go get ./... && go build -ldflags "-s" -a -installsuffix cgo -o freyr
+		golang go build -ldflags "-s" -a -installsuffix cgo -o freyr
 
 surtr:
-	docker run \
+	GO15VENDOREXPERIMENT=1 docker run \
 		-e CGO_ENABLED=0 \
 		-e GOOS=linux \
-		-v $(GOPATH)/src/:/go/src/ \
+		-e "GOPATH=/go/src/github.com/serdmanczyk/freyr/vendor/:/go" \
 		-v $(pwd):/go/src/github.com/serdmanczyk/freyr/ \
-		-w /go/src/github.com/serdmanczyk/freyr/cmd/surtr \
-		golang go get ./... && go build -ldflags "-s" -a -installsuffix cgo -o surtr
+		-w /go/src/github.com/serdmanczyk/freyr/ \
+		golang go build -ldflags "-s" -a -installsuffix cgo -o surtr
 
 rundev:
 	docker-compose -f docker-compose.debug.yml -p dev build

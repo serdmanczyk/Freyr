@@ -2,3 +2,4 @@
 *.DS_Store
 *.pem
 nginx/static/node_modules
+particle/

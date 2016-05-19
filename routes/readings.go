@@ -3,7 +3,6 @@ package routes
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/cyclopsci/apollo"
 	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/net/context"
@@ -31,7 +30,6 @@ func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 	published := r.PostFormValue("published_at")
 	dataStr := r.PostFormValue("data")
 
-	fmt.Println(email, coreid, published, dataStr)
 	if StringsEmpty(email, coreid, published, dataStr) {
 		return models.Reading{}, NoReading
 	}

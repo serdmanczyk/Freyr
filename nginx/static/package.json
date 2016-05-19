@@ -26,6 +26,7 @@
     "react-faux-dom": "^2.4.0",
     "react-router": "^2.4.0",
     "style-loader": "^0.13.1",
+    "underscore": "^1.8.3",
     "webpack": "^1.13.0"
   }
 }

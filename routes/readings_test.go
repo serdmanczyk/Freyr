@@ -19,6 +19,7 @@ func formData(r models.Reading) string {
 	v.Set("data", r.DataJSON())
 	v.Set("coreid", r.CoreId)
 	v.Set("published_at", r.Posted.Format(models.JsonTime))
+
 	return v.Encode()
 }
 

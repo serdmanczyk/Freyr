@@ -1,16 +1,24 @@
 sudo: required
-
 env:
   DOCKER_COMPOSE_VERSION: 1.7.1
-
 before_install:
-  - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-  - chmod +x docker-compose
-  - sudo mv docker-compose /usr/local/bin
-
+- sudo rm /usr/local/bin/docker-compose
+- curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname
+  -s`-`uname -m` > docker-compose
+- chmod +x docker-compose
+- sudo mv docker-compose /usr/local/bin
 services:
-  - docker
-
+- docker
 script:
-  - make test
+- make test
+dd:
+- openssl aes-256-cbc -K $encrypted_2ad5753fb377_key -iv $encrypted_2ad5753fb377_iv
+  -in nginx/conf/privkey.pem.enc -out nginx/conf/privkey.pem -d
+- openssl aes-256-cbc -K $encrypted_2ad5753fb377_key -iv $encrypted_2ad5753fb377_iv
+  -in nginx/conf/fullchain.cert.pem.enc -out nginx/conf/fullchain.cert.pem -d
+- openssl aes-256-cbc -K $encrypted_35d59fde724e_key -iv $encrypted_35d59fde724e_iv
+  -in postgres/.env.enc -out postgres/.env -d
+- openssl aes-256-cbc -K $encrypted_35d59fde724e_key -iv $encrypted_35d59fde724e_iv
+  -in cmd/surtr/.env.enc -out cmd/surtr/.env -d
+- openssl aes-256-cbc -K $encrypted_35d59fde724e_key -iv $encrypted_35d59fde724e_iv
+  -in .env.enc -out .env -d

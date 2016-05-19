@@ -35,6 +35,8 @@ func main() {
 		c.ErrPrintln("Define what you want to delete [readings]")
 	})
 
+	surtr.DefineSubCommand("rotatesecret", "rotate user secret", rotateSecret, "domain", "secret", "email")
+
 	delete.DefineSubCommand("readings", "delete readings", deleteBetween, "domain", "secret", "email", "coreid", "start", "end")
 
 	webToken := token.DefineSubCommand("web", "generate web token", genWebToken, "email", "secret")
@@ -254,4 +256,22 @@ func postReading(c cli.Command) {
 		//reading = fake.RandReading(email, coreid, postedTime)
 		reading = readingGen()
 	}
+}
+
+func rotateSecret(c cli.Command) {
+	domain := c.Param("domain").String()
+	email := c.Param("email").String()
+	secret := c.Param("secret").String()
+
+	signator, err := client.NewApiSignator(email, secret)
+	if err != nil {
+		panic(err)
+	}
+
+	newsecret, err := client.RotateSecret(signator, domain)
+	if err != nil {
+		panic(err)
+	}
+
+	c.Println(newsecret.Encode())
 }

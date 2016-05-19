@@ -1,7 +1,7 @@
 FROM nginx:alpine
 
 COPY ./conf/nginx.conf /etc/nginx/
-COPY ./conf/cert.pem /etc/nginx/
+COPY ./conf/fullchain.cert.pem /etc/nginx/
 COPY ./conf/privkey.pem /etc/nginx/
 
 RUN mkdir -p /usr/share/nginx/html/build

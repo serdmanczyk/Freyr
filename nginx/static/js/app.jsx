@@ -6,6 +6,7 @@ import d3 from 'd3';
 import ReactFauxDOM from 'react-faux-dom';
 import DateRangePicker from 'react-bootstrap-daterangepicker';
 import moment from 'moment';
+import _ from 'underscore'
 import { Button, Glyphicon } from 'react-bootstrap';
 
 var ReadingsTable = React.createClass({
@@ -55,17 +56,21 @@ var ReadingsTable = React.createClass({
 
 var ReadingsChart = React.createClass({
   getInitialState() {
+    var sod = moment().startOf('day');
+    var eod = moment().endOf('day');
+    var som = moment().startOf('month');
+    var eom = moment().endOf('month');
       return {
         ranges: {
-          'Today': [moment(), moment()],
-          'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-          'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-          'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-          'This Month': [moment().startOf('month'), moment().endOf('month')],
-          'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+          'Today': [sod, eod],
+          'Yesterday': [sod.clone().subtract(1, 'days'), eod.clone().subtract(1, 'days')],
+          'Last 7 Days': [sod.clone().subtract(6, 'days'), eod],
+          'Last 30 Days': [sod.clone().subtract(29, 'days'), eod],
+          'This Month': [som, eom],
+          'Last Month': [som.clone().subtract(1, 'month'), eom.clone().subtract(1, 'month')]
         },
-        startDate: moment().subtract(7, 'days'),
-        endDate: moment(),
+        startDate: sod,
+        endDate: eod,
         readings:[],
         readingType: "temperature",
         windowInnerWidth: window.innerWidth,
@@ -101,7 +106,7 @@ var ReadingsChart = React.createClass({
           this.setState({
             startDate: startDate,
             endDate: endDate,
-            readings: data,
+            readings: _.sortBy(data, 'posted')
           });
         })
         .fail(err => {
@@ -119,16 +124,16 @@ var ReadingsChart = React.createClass({
     var data = this.state.readings;
     var type = this.state.readingType;
     var margin = {top: 20, right: 20, bottom: 30, left: 50};
-    var width = this.state.windowInnerWidth - 100;
-    var height = this.state.windowInnerHeight - 200;
+    var width = this.state.windowInnerWidth * 0.60;
+    var height = this.state.windowInnerHeight * 0.57;
+    var minWidth = 100;
+    var minHeight = 100;
 
-    width = width < 500 ? width : 500;
-    height = height < 300 ? height : 300;
+    width = width > minWidth ? width : minWidth;
+    height = height > minHeight ? height : minHeight;
 
     width = width - margin.left - margin.right
     height = height - margin.top - margin.bottom
-
-    var parseDate = d3.time.format('%Y-%m-%dT%H:%M:%SZ').parse
 
     var x = d3.time.scale()
     .range([0, width])
@@ -146,8 +151,7 @@ var ReadingsChart = React.createClass({
     .orient('left')
 
     data.forEach(function (d) {
-      d.timestamp = parseDate(d.posted)
-      // d.close = +d.close
+      d.timestamp = moment(d.posted)
     })
 
     var line = d3.svg.line()

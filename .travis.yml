@@ -7,11 +7,6 @@ before_install:
   -s`-`uname -m` > docker-compose
 - chmod +x docker-compose
 - sudo mv docker-compose /usr/local/bin
-services:
-- docker
-script:
-- make test
-dd:
 - openssl aes-256-cbc -K $encrypted_2ad5753fb377_key -iv $encrypted_2ad5753fb377_iv
   -in nginx/conf/privkey.pem.enc -out nginx/conf/privkey.pem -d
 - openssl aes-256-cbc -K $encrypted_2ad5753fb377_key -iv $encrypted_2ad5753fb377_iv
@@ -22,3 +17,7 @@ dd:
   -in cmd/surtr/.env.enc -out cmd/surtr/.env -d
 - openssl aes-256-cbc -K $encrypted_35d59fde724e_key -iv $encrypted_35d59fde724e_iv
   -in .env.enc -out .env -d
+services:
+- docker
+script:
+- make test

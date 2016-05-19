@@ -11,7 +11,7 @@ freyr:
 		-v $(GOPATH)/src/:/go/src/ \
 		-v $(pwd):/go/src/github.com/serdmanczyk/freyr/ \
 		-w /go/src/github.com/serdmanczyk/freyr/ \
-		golang go build -ldflags "-s" -a -installsuffix cgo -o freyr
+		golang go get ./... && go build -ldflags "-s" -a -installsuffix cgo -o freyr
 
 surtr:
 	docker run \
@@ -20,7 +20,7 @@ surtr:
 		-v $(GOPATH)/src/:/go/src/ \
 		-v $(pwd):/go/src/github.com/serdmanczyk/freyr/ \
 		-w /go/src/github.com/serdmanczyk/freyr/cmd/surtr \
-		golang go build -ldflags "-s" -a -installsuffix cgo -o surtr
+		golang go get ./... && go build -ldflags "-s" -a -installsuffix cgo -o surtr
 
 rundev:
 	docker-compose -f docker-compose.debug.yml -p dev build

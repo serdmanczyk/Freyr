@@ -46,4 +46,4 @@ acceptance:
 	docker-compose -f docker-compose.acceptance.yml -p acceptance build
 	docker-compose -f docker-compose.acceptance.yml -p acceptance up --force-recreate --abort-on-container-exit
 
-test: freyr surtr webpack integration acceptance
+test: freyr surtr integration acceptance

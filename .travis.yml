@@ -11,7 +11,7 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
-  - openssl aes-256-cbc -K $encrypted_35d59fde724e_key -iv $encrypted_35d59fde724e_iv -in secrets.tar.enc -out secrets.tar -d
+  - openssl aes-256-cbc -K $encrypted_3f58e3c7ee52_key -iv $encrypted_3f58e3c7ee52_iv -in secrets.tar.enc -out secrets.tar -d
   - tar xvf secrets.tar
   - mv .envpostgres postgres/.env
   - mv .envsurtr cmd/surtr/.env

@@ -19,7 +19,7 @@ surtr:
 		-e GOOS=linux \
 		-e "GOPATH=/go/src/github.com/serdmanczyk/freyr/vendor/:/go" \
 		-v $(pwd):/go/src/github.com/serdmanczyk/freyr/ \
-		-w /go/src/github.com/serdmanczyk/freyr/ \
+		-w /go/src/github.com/serdmanczyk/freyr/cmd/surtr \
 		golang go build -ldflags "-s" -a -installsuffix cgo -o surtr
 
 rundev:

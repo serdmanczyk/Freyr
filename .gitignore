@@ -1,5 +1,12 @@
 *.env
 *.DS_Store
 *.pem
+.env*
+.idea/
+secrets.tar
 nginx/static/node_modules
 particle/
+freyr
+freyr.iml
+cmd/surtr/surtr
+nginx/static/build/

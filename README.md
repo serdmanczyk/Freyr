@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/serdmanczyk/Freyr.svg?branch=master)](https://travis-ci.org/serdmanczyk/Freyr)
+[![Go Report Card](https://goreportcard.com/badge/github.com/serdmanczyk/freyr)](https://goreportcard.com/report/github.com/serdmanczyk/freyr)
 ![asdf](repo_files/logo.png "Freyr")
 
 # What?

@@ -19,7 +19,7 @@ const (
 
 func TestHandleThreeLegged(t *testing.T) {
 	oauth := &fake.Oauth{Email: testEmail}
-	tokensource := token.JtwTokenGen(testKey)
+	tokensource := token.JWTTokenGen(testKey)
 
 	authorizeRequest, err := http.NewRequest("GET", "/authorize", nil)
 	if err != nil {
@@ -58,8 +58,8 @@ func TestHandleThreeLegged(t *testing.T) {
 		t.Fatalf("Passed claim in csrf token invalid: %v", claims)
 	}
 
-	callbackUrl := "/oauth2callback?state=" + state[0] + "&code=jibbajabba"
-	callbackRequest, err := http.NewRequest("GET", callbackUrl, nil)
+	callbackURL := "/oauth2callback?state=" + state[0] + "&code=jibbajabba"
+	callbackRequest, err := http.NewRequest("GET", callbackURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,13 +110,12 @@ func TestHandleThreeLegged(t *testing.T) {
 }
 
 // TODO: refactor following into table test??
-
 func TestRejectToken(t *testing.T) {
 	oauth := &fake.Oauth{Email: testEmail}
-	tokensource := token.JtwTokenGen(testKey)
+	tokensource := token.JWTTokenGen(testKey)
 
-	callbackUrl := "/oauth2callback?state=shutyomouth&code=jibbajabba"
-	callbackRequest, err := http.NewRequest("GET", callbackUrl, nil)
+	callbackURL := "/oauth2callback?state=shutyomouth&code=jibbajabba"
+	callbackRequest, err := http.NewRequest("GET", callbackURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +132,7 @@ func TestRejectToken(t *testing.T) {
 
 func TestExpiredToken(t *testing.T) {
 	oauth := &fake.Oauth{Email: testEmail}
-	tokensource := token.JtwTokenGen(testKey)
+	tokensource := token.JWTTokenGen(testKey)
 
 	claims := map[string]interface{}{}
 	expiredToken, err := tokensource.GenerateToken(time.Now().Add(time.Second*-1), claims)
@@ -141,8 +140,8 @@ func TestExpiredToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	callbackUrl := "/oauth2callback?state=" + expiredToken + "&code=jibbajabba"
-	callbackRequest, err := http.NewRequest("GET", callbackUrl, nil)
+	callbackURL := "/oauth2callback?state=" + expiredToken + "&code=jibbajabba"
+	callbackRequest, err := http.NewRequest("GET", callbackURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,14 +155,14 @@ func TestExpiredToken(t *testing.T) {
 		t.Fatalf("Response should be %d, got: %d", http.StatusForbidden, callbackResponse.Code)
 	}
 
-	if !strings.Contains(callbackResponse.Body.String(), token.TokenExpired.Error()) {
-		t.Fatalf("Error response incorrect, expected %s, got: %s", token.TokenExpired.Error(), callbackResponse.Body.String())
+	if !strings.Contains(callbackResponse.Body.String(), token.ErrorTokenExpired.Error()) {
+		t.Fatalf("Error response incorrect, expected %s, got: %s", token.ErrorTokenExpired.Error(), callbackResponse.Body.String())
 	}
 }
 
 func TestInvalidClaims(t *testing.T) {
 	oauth := &fake.Oauth{Email: testEmail}
-	tokensource := token.JtwTokenGen(testKey)
+	tokensource := token.JWTTokenGen(testKey)
 
 	claims := map[string]interface{}{
 		"wacko": "blammo",
@@ -173,8 +172,8 @@ func TestInvalidClaims(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	callbackUrl := "/oauth2callback?state=" + expiredToken + "&code=jibbajabba"
-	callbackRequest, err := http.NewRequest("GET", callbackUrl, nil)
+	callbackURL := "/oauth2callback?state=" + expiredToken + "&code=jibbajabba"
+	callbackRequest, err := http.NewRequest("GET", callbackURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,7 +187,7 @@ func TestInvalidClaims(t *testing.T) {
 		t.Fatalf("Response should be %d, got: %d", http.StatusForbidden, callbackResponse.Code)
 	}
 
-	if !strings.Contains(callbackResponse.Body.String(), InvalidClaims.Error()) {
-		t.Fatalf("Error response incorrect, expected %s, got: %s", InvalidClaims.Error(), callbackResponse.Body.String())
+	if !strings.Contains(callbackResponse.Body.String(), ErrorInvalidClaims.Error()) {
+		t.Fatalf("Error response incorrect, expected %s, got: %s", ErrorInvalidClaims.Error(), callbackResponse.Body.String())
 	}
 }

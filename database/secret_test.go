@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestGetSecretDoesntExist(t *testing.T) {
+func TestGetErrorSecretDoesntExist(t *testing.T) {
 	testUser := models.User{
 		Email:      "kilgoretrout@stagman.com",
 		Name:       "Kilgore Trout",
@@ -18,21 +18,21 @@ func TestGetSecretDoesntExist(t *testing.T) {
 	}
 
 	_, err := db.GetSecret(testUser.Email)
-	if err.Error() != models.SecretDoesntExist.Error() {
+	if err.Error() != models.ErrorSecretDoesntExist.Error() {
 		t.Errorf("Unknown error retreiving secret for non-existent user: %s", err.Error())
 	}
 
 	err = db.StoreUser(testUser)
 	if err != nil {
-		t.Fatalf("Failed adding user: ", err.Error())
+		t.Fatalf("Failed adding user: %s", err.Error())
 	}
 
 	_, err = db.GetSecret(testUser.Email)
 	if err == nil {
-		t.Errorf("No error reported retreiving un-set secret for new user: should be %s", models.SecretDoesntExist.Error())
+		t.Errorf("No error reported retreiving un-set secret for new user: should be %s", models.ErrorSecretDoesntExist.Error())
 	}
 
-	if err != models.SecretDoesntExist {
+	if err != models.ErrorSecretDoesntExist {
 		t.Errorf("Unknown error retreiving un-set secret for new user: %s", err.Error())
 	}
 }
@@ -49,7 +49,7 @@ func TestSetGetSecret(t *testing.T) {
 
 	err := db.StoreUser(testUser)
 	if err != nil {
-		t.Fatalf("Failed adding user: ", err.Error())
+		t.Fatalf("Failed adding user: %s", err.Error())
 	}
 
 	secret, err := models.NewSecret()

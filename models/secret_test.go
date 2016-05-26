@@ -15,7 +15,7 @@ const (
 func TestSecret(t *testing.T) {
 	secret, err := NewSecret()
 	if err != nil {
-		t.Fatal("Error creating Secret %s", err.Error())
+		t.Fatalf("Error creating Secret %s", err.Error())
 	}
 	if len(secret) < 32 {
 		t.Fatal("Secret is too small")
@@ -25,7 +25,7 @@ func TestSecret(t *testing.T) {
 func TestValidateSignature(t *testing.T) {
 	secret, err := NewSecret()
 	if err != nil {
-		t.Fatal("Error creating Secret %s", err.Error())
+		t.Fatalf("Error creating Secret %s", err.Error())
 	}
 
 	signature := secret.Sign(dummySigningContents)
@@ -43,7 +43,7 @@ func TestValidateSignature(t *testing.T) {
 func TestBase64Encoding(t *testing.T) {
 	secret, err := NewSecret()
 	if err != nil {
-		t.Fatal("Error creating Secret %s", err.Error())
+		t.Fatalf("Error creating Secret %s", err.Error())
 	}
 
 	originalSignature := secret.Sign(dummySigningContents)
@@ -76,7 +76,7 @@ func TestBuffer(t *testing.T) {
 	signingString := "blahblahblah"
 	secret, err := NewSecret()
 	if err != nil {
-		t.Fatal("Error creating Secret %s", err.Error())
+		t.Fatalf("Error creating Secret %s", err.Error())
 	}
 
 	signature := secret.Sign(signingString)

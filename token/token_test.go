@@ -16,7 +16,7 @@ const (
 )
 
 func TestTokenGen(t *testing.T) {
-	tkgen := JtwTokenGen(testKey)
+	tkgen := JWTTokenGen(testKey)
 	expiry := time.Now().Add(time.Minute)
 
 	claims := Claims{"cheese": "swiss"}
@@ -37,7 +37,7 @@ func TestTokenGen(t *testing.T) {
 }
 
 func TestTokenExpiration(t *testing.T) {
-	tkgen := JtwTokenGen(testKey)
+	tkgen := JWTTokenGen(testKey)
 	expiry := time.Now().Add(-time.Minute)
 	signedToken, err := tkgen.GenerateToken(expiry, nilClaims)
 	if err != nil {
@@ -45,20 +45,20 @@ func TestTokenExpiration(t *testing.T) {
 	}
 
 	_, err = tkgen.ValidateToken(signedToken)
-	if err.Error() != TokenExpired.Error() {
+	if err.Error() != ErrorTokenExpired.Error() {
 		t.Fatalf("Token should be expired")
 	}
 }
 
 func TestKeyFailure(t *testing.T) {
-	tkgen := JtwTokenGen(testKey)
+	tkgen := JWTTokenGen(testKey)
 	expiry := time.Now().Add(time.Minute)
 	signedToken, err := tkgen.GenerateToken(expiry, nilClaims)
 	if err != nil {
 		t.Fatalf("Failure generating token: %v", err)
 	}
 
-	otherTkgen := JtwTokenGen(badKey)
+	otherTkgen := JWTTokenGen(badKey)
 
 	_, err = otherTkgen.ValidateToken(signedToken)
 	if err == nil || err.Error() != jwt.ErrSignatureInvalid.Error() {
@@ -74,10 +74,10 @@ func TestWrongAlgorithm(t *testing.T) {
 		t.Fatalf("Failure generating token: %v", err)
 	}
 
-	tkgen := JtwTokenGen(testKey)
+	tkgen := JWTTokenGen(testKey)
 
 	_, err = tkgen.ValidateToken(signedToken)
-	if err == nil || err.Error() != InvalidAlgorithm.Error() {
+	if err == nil || err.Error() != ErrorInvalidAlgorithm.Error() {
 		t.Fatalf("Algorithm should be invalid")
 	}
 }
@@ -90,7 +90,7 @@ func TestValidateWebToken(t *testing.T) {
 	}
 	ss := fake.SecretStore{userEmail: secret}
 
-	tokenGen := JtwTokenGen(secret)
+	tokenGen := JWTTokenGen(secret)
 
 	exp := time.Now().Add(time.Second * 5)
 	jwtToken, err := tokenGen.GenerateToken(exp, Claims{
@@ -98,7 +98,7 @@ func TestValidateWebToken(t *testing.T) {
 		"email":        userEmail,
 	})
 	if err != nil {
-		t.Fatal("error generating token: %s", err.Error())
+		t.Fatalf("error generating token: %s", err.Error())
 	}
 
 	_, err = ValidateUserToken(ss, jwtToken)
@@ -115,7 +115,7 @@ func TestValidateNotfoundWebToken(t *testing.T) {
 	}
 	ss := fake.SecretStore{userEmail: secret}
 
-	tokenGen := JtwTokenGen(secret)
+	tokenGen := JWTTokenGen(secret)
 
 	exp := time.Now().Add(time.Second * 5)
 	jwtToken, err := tokenGen.GenerateToken(exp, Claims{
@@ -127,8 +127,8 @@ func TestValidateNotfoundWebToken(t *testing.T) {
 	}
 
 	_, err = ValidateUserToken(ss, jwtToken)
-	if err.Error() != models.SecretDoesntExist.Error() {
-		t.Fatalf("token should be invalid, expected error: %s but got %s", models.SecretDoesntExist.Error(), err)
+	if err.Error() != models.ErrorSecretDoesntExist.Error() {
+		t.Fatalf("token should be invalid, expected error: %s but got %s", models.ErrorSecretDoesntExist.Error(), err)
 	}
 }
 
@@ -144,7 +144,7 @@ func TestValidateInvalidWebToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	tokenGen := JtwTokenGen(newSecret)
+	tokenGen := JWTTokenGen(newSecret)
 
 	exp := time.Now().Add(time.Second * 5)
 	jwtToken, err := tokenGen.GenerateToken(exp, Claims{

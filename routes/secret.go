@@ -8,6 +8,9 @@ import (
 	"net/http"
 )
 
+// GenerateSecret handles an HTTP requests to generate the first secret for a
+// particular user.  This endpoint should be called once, and then RotateSecret
+// thereafter with an API signed request.
 func GenerateSecret(s models.SecretStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		email := getEmail(ctx)
@@ -39,6 +42,8 @@ func GenerateSecret(s models.SecretStore) apollo.Handler {
 	})
 }
 
+// RotateSecret replaces a user's currently stored secret and replaces it with
+// a new, randomly generated, one.
 func RotateSecret(s models.SecretStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		email := getEmail(ctx)

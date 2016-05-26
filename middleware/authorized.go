@@ -1,3 +1,5 @@
+// Package middleware defines HTTP middleware such as those used for user
+// validation.
 package middleware
 
 import (
@@ -11,20 +13,28 @@ import (
 	"time"
 )
 
+// Constant definitions for authorization type headers and
+// header values.
 const (
-	ApiAuthTypeValue    = "API"
+	APIAuthTypeValue    = "API"
 	DeviceAuthTypeValue = "DEVICE"
 	AuthTypeHeader      = "X-FREYR-AUTHTYPE"
 	TokenHeader         = "X-FREYR-TOKEN"
 	AuthUserHeader      = "X-FREYR-USER"
-	ApiAuthDateHeader   = "X-FREYR-DATETIME"
-	ApiSignatureHeader  = "X-FREYR-SIGNATURE"
+	APIAuthDateHeader   = "X-FREYR-DATETIME"
+	APISignatureHeader  = "X-FREYR-SIGNATURE"
 )
 
+// Authorizer is an interface that represents types capable of validating
+// if an HTTP request is authorized, and returning a context indicating the
+// authorized user
 type Authorizer interface {
 	Authorize(ctx context.Context, r *http.Request) context.Context
 }
 
+// Authorize returns a piece of middleware that will verify if the request
+// is authorized by and of the Authorizers passed in before calling subsequent
+// handlers.
 func Authorize(auths ...Authorizer) apollo.Constructor {
 	return apollo.Constructor(func(next apollo.Handler) apollo.Handler {
 		return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -41,14 +51,20 @@ func Authorize(auths ...Authorizer) apollo.Constructor {
 	})
 }
 
+// WebAuthorizer is used to verify if requests are signed in a manner
+// expected users accessing the api via a web browser.
 type WebAuthorizer struct {
-	tokenStore token.JtwTokenGen
+	tokenStore token.JWTTokenGen
 }
 
-func NewWebAuthorizer(tS token.JtwTokenGen) *WebAuthorizer {
+// NewWebAuthorizer generates a new *WebAuthorizer
+func NewWebAuthorizer(tS token.JWTTokenGen) *WebAuthorizer {
 	return &WebAuthorizer{tokenStore: tS}
 }
 
+// Authorize validates the request contains a cookie placed by the system's
+// oauth handler and that the cookie has a valid signature signed by the
+// master token.JtwTokenGen
 func (u *WebAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
 	cookie, err := r.Cookie(oauth.CookieName)
 	if err != nil {
@@ -68,21 +84,25 @@ func (u *WebAuthorizer) Authorize(ctx context.Context, r *http.Request) context.
 	return context.WithValue(ctx, "email", userEmail)
 }
 
-type ApiAuthorizer struct {
+// APIAuthorizer is a type used to validate requests were signed in
+// the manner expected of API style requests.
+type APIAuthorizer struct {
 	secretStore models.SecretStore
 }
 
-func NewApiAuthorizer(ss models.SecretStore) *ApiAuthorizer {
-	return &ApiAuthorizer{secretStore: ss}
+// NewAPIAuthorizer returns a new APIAuthorizer
+func NewAPIAuthorizer(ss models.SecretStore) *APIAuthorizer {
+	return &APIAuthorizer{secretStore: ss}
 }
 
-func (a *ApiAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
+// Authorize validates that a request has been signed with a user's secret
+func (a *APIAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
 	authType := r.Header.Get(AuthTypeHeader)
-	if authType != ApiAuthTypeValue {
+	if authType != APIAuthTypeValue {
 		return nil
 	}
 
-	signature := r.Header.Get(ApiSignatureHeader)
+	signature := r.Header.Get(APISignatureHeader)
 	if signature == "" {
 		return nil
 	}
@@ -105,7 +125,7 @@ func (a *ApiAuthorizer) Authorize(ctx context.Context, r *http.Request) context.
 }
 
 func apiSigningString(r *http.Request) (userEmail string, signinString string) {
-	datetime := r.Header.Get(ApiAuthDateHeader)
+	datetime := r.Header.Get(APIAuthDateHeader)
 	user := r.Header.Get(AuthUserHeader)
 
 	if datetime == "" || user == "" {
@@ -131,27 +151,35 @@ func apiSigningString(r *http.Request) (userEmail string, signinString string) {
 	return
 }
 
+// SignRequest builds a signing-string from the request's content and signs
+// it with the given secret.
 func SignRequest(s models.Secret, userEmail string, r *http.Request) {
-	r.Header.Add(AuthTypeHeader, ApiAuthTypeValue)
+	r.Header.Add(AuthTypeHeader, APIAuthTypeValue)
 	r.Header.Add(AuthUserHeader, userEmail)
 	n := time.Now().Unix()
 	unixStamp := strconv.FormatInt(n, 10)
-	r.Header.Add(ApiAuthDateHeader, unixStamp)
+	r.Header.Add(APIAuthDateHeader, unixStamp)
 
 	_, signingString := apiSigningString(r)
 
 	signature := s.Sign(signingString)
-	r.Header.Add(ApiSignatureHeader, signature)
+	r.Header.Add(APISignatureHeader, signature)
 }
 
+// DeviceAuthorizer is a type used to verify that a request was signed in the
+// manner specified for requests from a device.
 type DeviceAuthorizer struct {
 	secretStore models.SecretStore
 }
 
+// NewDeviceAuthorizer returns a new *DeviceAuthorizer
 func NewDeviceAuthorizer(ss models.SecretStore) *DeviceAuthorizer {
 	return &DeviceAuthorizer{secretStore: ss}
 }
 
+// Authorize validates a a valid JWT signature header is present signed by
+// the user's secret and that the content in the signature matches the headers
+// describing the user and core on who's behalf the request was made.
 func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) context.Context {
 	authType := r.Header.Get(AuthTypeHeader)
 	if authType != DeviceAuthTypeValue {
@@ -168,8 +196,8 @@ func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) conte
 		return nil
 	}
 
-	requestCoreId := r.PostFormValue("coreid")
-	if requestCoreId == "" {
+	requestCoreID := r.PostFormValue("coreid")
+	if requestCoreID == "" {
 		return nil
 	}
 
@@ -178,7 +206,7 @@ func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) conte
 		return nil
 	}
 
-	tokenCoreId, ok := claims["coreid"].(string)
+	tokenCoreID, ok := claims["coreid"].(string)
 	if !ok {
 		return nil
 	}
@@ -188,7 +216,7 @@ func (d *DeviceAuthorizer) Authorize(ctx context.Context, r *http.Request) conte
 		return nil
 	}
 
-	if tokenCoreId != requestCoreId || tokenUserEmail != requestUserEmail {
+	if tokenCoreID != requestCoreID || tokenUserEmail != requestUserEmail {
 		return nil
 	}
 

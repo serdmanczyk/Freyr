@@ -10,7 +10,7 @@ import (
 var db DB
 
 func TestMain(m *testing.M) {
-	ldb, err := DbConn("postgres", "testuser", "testpassword")
+	ldb, err := DBConn("postgres", "postgres", "testuser", "testpassword")
 	if err != nil {
 		panic("Error creating database connection: " + err.Error())
 	}

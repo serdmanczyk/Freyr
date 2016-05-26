@@ -1,3 +1,15 @@
+// Package envflags package houses the SetFlags and ConfigEmpty methods for
+// conveniently specifiying config via a single struct.  Using tags
+// on the struct fields, both the cli flag option name and environment
+// variable name can be specified it can be specified.  Environment
+// variable values will be defaults, with cli options taking preference
+// if specified.
+//
+// example struct:
+//    type config struct {
+//        StructField string `flag:"struct_field" env:"APP_STRUCTFIELD"`
+//    }
+//
 package envflags
 
 import (
@@ -6,6 +18,9 @@ import (
 	"reflect"
 )
 
+// SetFlags takes a config struct and set its fields as options
+// via the flags library, with the default value being the field's
+// environment variable.
 func SetFlags(s interface{}) bool {
 	val := reflect.ValueOf(s).Elem()
 
@@ -21,6 +36,9 @@ func SetFlags(s interface{}) bool {
 	return false
 }
 
+// ConfigEmpty takes a config struct and determines if any of its field's
+// values are their zero value, meaning that their associated config flag
+// and environment variable were not specified.
 func ConfigEmpty(s interface{}) bool {
 	val := reflect.ValueOf(s).Elem()
 

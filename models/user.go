@@ -1,21 +1,23 @@
 package models
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
-	"io/ioutil"
 )
 
 var (
-	UserAlreadyExists = errors.New("Entry already exists for user")
+	// ErrorUserAlreadyExists is returned from a UserStore when a user is
+	// attempted to be stored but already exists in the store.
+	ErrorUserAlreadyExists = errors.New("Entry already exists for user")
 )
 
+// UserStore is an interface represeting types that can store and retrieve user descriptions
 type UserStore interface {
 	GetUser(email string) (User, error)
 	StoreUser(User) error
 }
 
+// User is a struct represnting a distinct user of the application and basic
+// data describing that user.
 type User struct {
 	Email      string `json:"email"`
 	Name       string `json:"name"`
@@ -23,19 +25,4 @@ type User struct {
 	FamilyName string `json:"family_name"`
 	Gender     string `json:"gender"`
 	Locale     string `json:"locale"`
-}
-
-//TODO: remove this, jsut use NewDecoder(r io.Reader)
-func UserFromJson(r io.Reader) (*User, error) {
-	buf, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-
-	user := new(User)
-	if err := json.Unmarshal(buf, &user); err != nil {
-		return nil, err
-	}
-
-	return user, nil
 }

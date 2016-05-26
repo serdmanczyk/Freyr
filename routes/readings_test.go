@@ -17,8 +17,8 @@ func formData(r models.Reading) string {
 	v := url.Values{}
 	v.Set("event", "post_reading")
 	v.Set("data", r.DataJSON())
-	v.Set("coreid", r.CoreId)
-	v.Set("published_at", r.Posted.Format(models.JsonTime))
+	v.Set("coreid", r.CoreID)
+	v.Set("published_at", r.Posted.Format(models.JSONTime))
 
 	return v.Encode()
 }
@@ -87,9 +87,9 @@ func TestGetReadings(t *testing.T) {
 	query.Add("start", start.Format(time.RFC3339))
 	query.Add("end", timeStamp.Format(time.RFC3339))
 	query.Add("core", coreid)
-	reqUrl := "/get_readings?" + query.Encode()
+	reqURL := "/get_readings?" + query.Encode()
 
-	getReadingsReq, err := http.NewRequest("GET", reqUrl, nil)
+	getReadingsReq, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -112,6 +112,6 @@ func TestGetReadings(t *testing.T) {
 	}
 
 	if len(retReadings) != 100 {
-		t.Fatal("Unexpected number of readings returned; expected 100 got %d", len(retReadings))
+		t.Fatalf("Unexpected number of readings returned; expected 100 got %d", len(retReadings))
 	}
 }

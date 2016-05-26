@@ -1,3 +1,5 @@
+// Package oauth defines methods for handling Three-legged Oauth with various
+// third-parties (e.g. Google) as well as HTTP handlers.
 package oauth
 
 import (
@@ -11,15 +13,22 @@ import (
 )
 
 const (
+	// CookieName defines the name of the cookie that web access tokens
+	// will be stored as in web requests.
 	CookieName = "_freyr_"
 )
 
 var (
-	oauthClaim    = map[string]interface{}{"oauthlogin": true}
-	InvalidClaims = errors.New("Claims are invalid")
+	oauthClaim = map[string]interface{}{"oauthlogin": true}
+	// ErrorInvalidClaims is returned when an oauth requests claims do
+	// not match that which the system sets.
+	ErrorInvalidClaims = errors.New("Claims are invalid")
 )
 
-type OauthHandler interface {
+// Handler is an interface representing types that provide the interface
+// to perform Oauth three-legged authorization against a system such as
+// Google or Twitter.
+type Handler interface {
 	GetRedirectURL(csrftoken string) string
 	GetCallbackCsrfToken(r *http.Request) string
 	GetExchangeToken(r *http.Request) (*oauth2.Token, error)
@@ -34,7 +43,7 @@ func checkOauthClaim(claims map[string]interface{}) bool {
 	return true
 }
 
-func setUserCookie(w http.ResponseWriter, t token.TokenSource, u models.User) error {
+func setUserCookie(w http.ResponseWriter, t token.Source, u models.User) error {
 	expiry := time.Now().Add(time.Hour * 744) // ~1 month
 	token, err := token.GenerateWebToken(t, expiry, u.Email)
 	if err != nil {
@@ -52,7 +61,9 @@ func setUserCookie(w http.ResponseWriter, t token.TokenSource, u models.User) er
 	return nil
 }
 
-func HandleAuthorize(o OauthHandler, t token.TokenSource) http.Handler {
+// HandleAuthorize accepts HTTP requests to be authorized and redirects the
+// user to the Oauth providers authorization URL.
+func HandleAuthorize(o Handler, t token.Source) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		expiry := time.Now().Add(time.Minute * 5)
 		token, err := t.GenerateToken(expiry, oauthClaim)
@@ -66,7 +77,10 @@ func HandleAuthorize(o OauthHandler, t token.TokenSource) http.Handler {
 	})
 }
 
-func HandleOAuth2Callback(o OauthHandler, t token.TokenSource, userStore models.UserStore) http.Handler {
+// HandleOAuth2Callback handles verification of Oauth redirects from Oauth
+// provider's and ensuring the redirected request is valid and was initiated
+// by the system.
+func HandleOAuth2Callback(o Handler, t token.Source, userStore models.UserStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		csrfToken := o.GetCallbackCsrfToken(r)
 		claims, err := t.ValidateToken(csrfToken)
@@ -76,7 +90,7 @@ func HandleOAuth2Callback(o OauthHandler, t token.TokenSource, userStore models.
 		}
 
 		if !checkOauthClaim(claims) {
-			http.Error(w, InvalidClaims.Error(), http.StatusForbidden)
+			http.Error(w, ErrorInvalidClaims.Error(), http.StatusForbidden)
 			return
 		}
 
@@ -93,7 +107,7 @@ func HandleOAuth2Callback(o OauthHandler, t token.TokenSource, userStore models.
 		}
 
 		err = userStore.StoreUser(user)
-		if err != nil && err != models.UserAlreadyExists {
+		if err != nil && err != models.ErrorUserAlreadyExists {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -107,7 +121,10 @@ func HandleOAuth2Callback(o OauthHandler, t token.TokenSource, userStore models.
 	})
 }
 
-func SetDemoUser(t token.TokenSource, userStore models.UserStore) http.Handler {
+// SetDemoUser accepts an HTTP request and provides a signed a web access JWT
+// to allow the current site user to view example data in the demo user's
+// account.
+func SetDemoUser(t token.Source, userStore models.UserStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		user, err := userStore.GetUser("noone@nothing.com")
@@ -125,6 +142,8 @@ func SetDemoUser(t token.TokenSource, userStore models.UserStore) http.Handler {
 	})
 }
 
+// LogOut resets the user's JWT web access cookie so their session is no
+// longer valid.
 func LogOut() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie := &http.Cookie{

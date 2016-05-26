@@ -20,12 +20,12 @@ func TestStoreUser(t *testing.T) {
 
 	err := db.StoreUser(testUser)
 	if err != nil {
-		t.Fatalf("Failed adding user: ", err.Error())
+		t.Fatalf("Failed adding user: %s", err.Error())
 	}
 
 	dbUser, err := db.GetUser(testUser.Email)
 	if err != nil {
-		t.Fatalf("Failed getting user: ", err.Error())
+		t.Fatalf("Failed getting user: %s", err.Error())
 	}
 
 	if !reflect.DeepEqual(testUser, dbUser) {
@@ -44,11 +44,11 @@ func TestStoreUserTwice(t *testing.T) {
 	}
 	err := db.StoreUser(testUser)
 	if err != nil {
-		t.Fatalf("Failed adding user: ", err.Error())
+		t.Fatalf("Failed adding user: %s", err.Error())
 	}
 
 	err = db.StoreUser(testUser)
-	if err != nil && err != models.UserAlreadyExists {
-		t.Fatalf("Incorrect error on double insert; expected %s got %s ", models.UserAlreadyExists, err)
+	if err != nil && err != models.ErrorUserAlreadyExists {
+		t.Fatalf("Incorrect error on double insert; expected %s got %s ", models.ErrorUserAlreadyExists, err)
 	}
 }

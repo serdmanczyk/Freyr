@@ -32,7 +32,7 @@ func TestWebAuthorized(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tokGen := token.JtwTokenGen(secret)
+	tokGen := token.JWTTokenGen(secret)
 	uA := NewWebAuthorizer(tokGen)
 
 	handler := apollo.New(Authorize(uA)).ThenFunc(happyHandler)
@@ -72,7 +72,7 @@ func TestWebNotAuthorized(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tokGen := token.JtwTokenGen(secret)
+	tokGen := token.JWTTokenGen(secret)
 	uA := NewWebAuthorizer(tokGen)
 
 	handler := apollo.New(Authorize(uA)).ThenFunc(happyHandler)
@@ -100,7 +100,7 @@ func TestApiAuthorizer(t *testing.T) {
 	userEmail := "badwolf@galifrey.unv"
 
 	ss := fake.SecretStore{userEmail: secret}
-	aa := NewApiAuthorizer(ss)
+	aa := NewAPIAuthorizer(ss)
 
 	authorizeRequest, err := http.NewRequest("GET", "/authorize", nil)
 	if err != nil {
@@ -136,12 +136,12 @@ func TestDeviceAuthorizer(t *testing.T) {
 	}
 
 	userEmail := "badwolf@galifrey.unv"
-	coreId := "53ff76065075535110341387"
+	coreID := "53ff76065075535110341387"
 
 	ss := fake.SecretStore{userEmail: secret}
 	da := NewDeviceAuthorizer(ss)
 
-	body := strings.NewReader("event=post_reading&data=%7B%20%22temperature%22%3A%2019.800%2C%20%22humidity%22%3A%2057.300%2C%20%22moisture%22%3A%200000%2C%20%22light%22%3A%201.000%20%7D&published_at=2016-04-20T04%3A32%3A52.962Z&coreid=" + coreId)
+	body := strings.NewReader("event=post_reading&data=%7B%20%22temperature%22%3A%2019.800%2C%20%22humidity%22%3A%2057.300%2C%20%22moisture%22%3A%200000%2C%20%22light%22%3A%201.000%20%7D&published_at=2016-04-20T04%3A32%3A52.962Z&coreid=" + coreID)
 	authorizeRequest, err := http.NewRequest("POST", "/authorize", body)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -151,7 +151,7 @@ func TestDeviceAuthorizer(t *testing.T) {
 	authorizeRequest.Header.Add(AuthUserHeader, userEmail)
 	authorizeRequest.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	token, err := token.GenerateDeviceToken(token.JtwTokenGen(secret), time.Now().Add(time.Second), coreId, userEmail)
+	token, err := token.GenerateDeviceToken(token.JWTTokenGen(secret), time.Now().Add(time.Second), coreID, userEmail)
 	if err != nil {
 		t.Fatal(err)
 	}

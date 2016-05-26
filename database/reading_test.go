@@ -11,7 +11,7 @@ import (
 
 func TestReadings(t *testing.T) {
 	userEmail := "odin@asgard.unv"
-	coreId := "123123123142"
+	coreID := "123123123142"
 
 	testUser := models.User{
 		Email: userEmail,
@@ -23,14 +23,14 @@ func TestReadings(t *testing.T) {
 	}
 
 	start := time.Unix(1461300000, 0)
-	reading := fake.RandReading(userEmail, coreId, start)
+	reading := fake.RandReading(userEmail, coreID, start)
 
 	err = db.StoreReading(reading)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	readings, err := db.GetReadings(coreId, start.Add(time.Second*-1), start.Add(time.Second))
+	readings, err := db.GetReadings(coreID, start.Add(time.Second*-1), start.Add(time.Second))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func TestDBGetLatest(t *testing.T) {
 	userOneOutMap := make(map[string]models.Reading)
 
 	for _, reading := range latestOutputUserOne {
-		userOneOutMap[reading.CoreId] = reading
+		userOneOutMap[reading.CoreID] = reading
 	}
 
 	latestOutputUserOneCoreOne, ok := userOneOutMap[userOneCoreOne]

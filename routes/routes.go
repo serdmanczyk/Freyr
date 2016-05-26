@@ -13,6 +13,7 @@ func getEmail(ctx context.Context) string {
 	return email
 }
 
+// User handles HTTP requests for a user's info.
 func User(s models.UserStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		email := getEmail(ctx)

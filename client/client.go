@@ -1,3 +1,5 @@
+// Package client is a convenience package that provides methods to interface
+// with the Freyr server's HTTP API.
 package client
 
 import (
@@ -5,7 +7,6 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/serdmanczyk/freyr/middleware"
 	"github.com/serdmanczyk/freyr/models"
@@ -19,8 +20,8 @@ import (
 )
 
 var (
-	nilSecret              = models.Secret([]byte{})
-	client    *http.Client = nil
+	nilSecret = models.Secret([]byte{})
+	client    *http.Client
 )
 
 func init() {
@@ -31,49 +32,65 @@ func init() {
 	}
 }
 
+// Signator is an interface representing a type that is capable of signing
+// requests.
 type Signator interface {
 	Sign(r *http.Request)
 }
 
+// WebSignator is used to sign requests in the same way they would
+// be when a user is accessing the server through the web interface.
 type WebSignator struct {
 	Token string
 }
 
+// Sign is used to sign an http.Request by adding the signed token
+// (signed by the server's key) as a header.
 func (s WebSignator) Sign(r *http.Request) {
 	r.Header.Add("Cookie", oauth.CookieName+"="+s.Token)
 }
 
-type ApiSignator struct {
+// APISignator is used to sign requests in the method prescribed for API calls.
+type APISignator struct {
 	UserEmail string
 	Secret    models.Secret
 }
 
-func NewApiSignator(userEmail, base64Secret string) (*ApiSignator, error) {
+// NewAPISignator generates a new ApiSignator, conveniencing decoding the
+// secret from base64.
+func NewAPISignator(userEmail, base64Secret string) (*APISignator, error) {
 	secret, err := models.SecretFromBase64(base64Secret)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ApiSignator{
+	return &APISignator{
 		UserEmail: userEmail,
 		Secret:    secret,
 	}, nil
 }
 
-func (s ApiSignator) Sign(r *http.Request) {
+// Sign signs an http.Request by applying an API signature.
+func (s APISignator) Sign(r *http.Request) {
 	middleware.SignRequest(s.Secret, s.UserEmail, r)
 }
 
+// DeviceSignator is used to sign a request in the way prescribed for device
+// requests.
 type DeviceSignator struct {
 	UserEmail string
 	Token     string
 }
 
+// Sign (incomplete) signs a request by applying the headers indicating which
+// device signed the request for which user and providing a token signed with
+// that user's secret.
 func (s *DeviceSignator) Sign(r *http.Request) {
 	r.Header.Add(middleware.AuthTypeHeader, middleware.DeviceAuthTypeValue)
 	r.Header.Add(middleware.AuthUserHeader, s.UserEmail)
 }
 
+// GetLatest gets the latest readings, per device, for a user.
 func GetLatest(s Signator, domain string) ([]models.Reading, error) {
 	var readings []models.Reading
 
@@ -90,7 +107,7 @@ func GetLatest(s Signator, domain string) ([]models.Reading, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return readings, errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
+		return readings, fmt.Errorf("Http Error: %d", resp.StatusCode)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&readings)
@@ -101,6 +118,7 @@ func GetLatest(s Signator, domain string) ([]models.Reading, error) {
 	return readings, nil
 }
 
+// GetReadings gets all the readings stored in a specified time frame for a user.
 func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]models.Reading, error) {
 	var readings []models.Reading
 
@@ -108,9 +126,9 @@ func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]mod
 	query.Add("start", start.Format(time.RFC3339))
 	query.Add("end", end.Format(time.RFC3339))
 	query.Add("core", coreid)
-	reqUrl := domain + "/api/readings?" + query.Encode()
+	reqURL := domain + "/api/readings?" + query.Encode()
 
-	req, err := http.NewRequest("GET", reqUrl, nil)
+	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
 		return readings, err
 	}
@@ -123,7 +141,7 @@ func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]mod
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return readings, errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
+		return readings, fmt.Errorf("Http Error: %d", resp.StatusCode)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&readings)
@@ -134,14 +152,15 @@ func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]mod
 	return readings, nil
 }
 
+// DeleteReadings deletes all readings within a specified time frame.
 func DeleteReadings(s Signator, domain, coreid string, start, end time.Time) error {
 	query := url.Values{}
 	query.Add("start", start.Format(time.RFC3339))
 	query.Add("end", end.Format(time.RFC3339))
 	query.Add("core", coreid)
-	reqUrl := domain + "/api/delete_readings?" + query.Encode()
+	reqURL := domain + "/api/delete_readings?" + query.Encode()
 
-	req, err := http.NewRequest("DELETE", reqUrl, nil)
+	req, err := http.NewRequest("DELETE", reqURL, nil)
 	if err != nil {
 		return err
 	}
@@ -154,17 +173,18 @@ func DeleteReadings(s Signator, domain, coreid string, start, end time.Time) err
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
+		return fmt.Errorf("Http Error: %d", resp.StatusCode)
 	}
 
 	return nil
 }
 
+// PostReading posts a new reading
 func PostReading(s Signator, domain string, reading models.Reading) error {
 	form := url.Values{}
 	form.Set("event", "post_reading")
-	form.Set("coreid", reading.CoreId)
-	form.Set("published_at", reading.Posted.Format(models.JsonTime))
+	form.Set("coreid", reading.CoreID)
+	form.Set("published_at", reading.Posted.Format(models.JSONTime))
 	form.Set("data", reading.DataJSON())
 
 	formStr := form.Encode()
@@ -196,12 +216,13 @@ func PostReading(s Signator, domain string, reading models.Reading) error {
 	}
 
 	if resp.StatusCode != http.StatusCreated {
-		return errors.New(fmt.Sprintf("Http Error %d: %s", resp.StatusCode, string(bytes)))
+		return fmt.Errorf("Http Error %d: %s", resp.StatusCode, string(bytes))
 	}
 
 	return nil
 }
 
+// GetSecret requests the system to generate a new secret for the user.
 func GetSecret(s Signator, domain string) (models.Secret, error) {
 	req, err := http.NewRequest("GET", domain+"/api/secret", nil)
 	if err != nil {
@@ -216,7 +237,7 @@ func GetSecret(s Signator, domain string) (models.Secret, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return models.Secret([]byte{}), errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
+		return models.Secret([]byte{}), fmt.Errorf("Http Error: %d", resp.StatusCode)
 	}
 
 	var dest bytes.Buffer
@@ -230,6 +251,7 @@ func GetSecret(s Signator, domain string) (models.Secret, error) {
 	return models.Secret(dest.Bytes()), nil
 }
 
+// RotateSecret requests the system rotate a user's secret.  Request must be API signed.
 func RotateSecret(s Signator, domain string) (models.Secret, error) {
 	req, err := http.NewRequest("POST", domain+"/api/rotate_secret", nil)
 	if err != nil {
@@ -244,7 +266,7 @@ func RotateSecret(s Signator, domain string) (models.Secret, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nilSecret, errors.New(fmt.Sprintf("Http Error: %d", resp.StatusCode))
+		return nilSecret, fmt.Errorf("Http Error: %d", resp.StatusCode)
 	}
 
 	var dest bytes.Buffer

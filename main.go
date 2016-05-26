@@ -1,9 +1,17 @@
+// Freyr is a golang web server used to store and retrieve plant environmental
+// readings from a user's sensors.  It handles user log-in with oauth and authorizes
+// using HMAC signed JWTs.
+//
+// More at: http://serdmanczyk.github.io.
+//
+// Github: http://github.com/serdmanczyk/freyr/
 package main
 
 import (
 	"flag"
 	"github.com/codegangsta/negroni"
 	"github.com/cyclopsci/apollo"
+	_ "github.com/lib/pq"
 	"github.com/serdmanczyk/freyr/database"
 	"github.com/serdmanczyk/freyr/envflags"
 	"github.com/serdmanczyk/freyr/middleware"
@@ -15,8 +23,9 @@ import (
 	"os"
 )
 
+// Config represent the basic configuration needed by Freyr to operate.
 type Config struct {
-	OauthClientId     string `flag:"oauthClientId" env:"FREYR_OAUTHID"`
+	OauthClientID     string `flag:"oauthClientId" env:"FREYR_OAUTHID"`
 	OauthClientSecret string `flag:"oauthClientSecret" env:"FREYR_OAUTHSECRET"`
 	Domain            string `flag:"domain" env:"FREYR_DOMAIN"`
 	SecretKey         string `flag:"secretkey" env:"FREYR_SECRET"`
@@ -36,27 +45,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	googleOauth := oauth.NewGoogleOauth(c.OauthClientId, c.OauthClientSecret, c.Domain)
-	tokenSource := token.JtwTokenGen(c.SecretKey)
-	dbConn, err := database.DbConn(c.DBHost, c.DBUser, c.DBPassword)
+	googleOauth := oauth.NewGoogleOauth(c.OauthClientID, c.OauthClientSecret, c.Domain)
+	tokenSource := token.JWTTokenGen(c.SecretKey)
+	dbConn, err := database.DBConn("postgres", c.DBHost, c.DBUser, c.DBPassword)
 	if err != nil {
 		log.Fatalf("Error initializing database conn: %s", err)
 	}
 
 	webAuth := middleware.NewWebAuthorizer(tokenSource)
-	apiAuth := middleware.NewApiAuthorizer(dbConn)
+	apiAuth := middleware.NewAPIAuthorizer(dbConn)
 	deviceAuth := middleware.NewDeviceAuthorizer(dbConn)
 
 	apiAuthed := apollo.New(middleware.Authorize(apiAuth))
 	webAuthed := apollo.New(middleware.Authorize(webAuth))
-	webApiAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
+	webAPIAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
 	apiDeviceAuthed := apollo.New(middleware.Authorize(apiAuth, deviceAuth))
 
 	mux := http.NewServeMux()
-	mux.Handle("/user", webApiAuthed.Then(routes.User(dbConn)))
+	mux.Handle("/user", webAPIAuthed.Then(routes.User(dbConn)))
 	mux.Handle("/secret", webAuthed.Then(routes.GenerateSecret(dbConn)))
-	mux.Handle("/latest", webApiAuthed.Then(routes.GetLatestReadings(dbConn)))
-	mux.Handle("/readings", webApiAuthed.Then(routes.GetReadings(dbConn)))
+	mux.Handle("/latest", webAPIAuthed.Then(routes.GetLatestReadings(dbConn)))
+	mux.Handle("/readings", webAPIAuthed.Then(routes.GetReadings(dbConn)))
 
 	mux.Handle("/reading", apiDeviceAuthed.Then(routes.PostReading(dbConn)))
 

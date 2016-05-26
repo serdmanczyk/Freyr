@@ -1,3 +1,4 @@
+// Package surtr defines the cli interface for making calls against Freyr
 package main
 
 import (
@@ -84,7 +85,7 @@ func genWebToken(c cli.Command) {
 		panic(err)
 	}
 
-	tG := token.JtwTokenGen(parsedSecret)
+	tG := token.JWTTokenGen(parsedSecret)
 
 	webToken, err := token.GenerateWebToken(tG, exp, email)
 	if err != nil {
@@ -109,7 +110,7 @@ func genCoreToken(c cli.Command) {
 		panic(err)
 	}
 
-	tG := token.JtwTokenGen(parsedSecret)
+	tG := token.JWTTokenGen(parsedSecret)
 
 	deviceToken, err := token.GenerateDeviceToken(tG, exp, coreid, email)
 	if err != nil {
@@ -126,7 +127,7 @@ func getBetween(c cli.Command) {
 	start := c.Param("start").String()
 	end := c.Param("end").String()
 
-	signator, err := client.NewApiSignator(email, secret)
+	signator, err := client.NewAPISignator(email, secret)
 	if err != nil {
 		panic(err)
 	}
@@ -160,7 +161,7 @@ func deleteBetween(c cli.Command) {
 	start := c.Param("start").String()
 	end := c.Param("end").String()
 
-	signator, err := client.NewApiSignator(email, secret)
+	signator, err := client.NewAPISignator(email, secret)
 	if err != nil {
 		panic(err)
 	}
@@ -186,7 +187,7 @@ func getLatest(c cli.Command) {
 	email := c.Param("email").String()
 	secret := c.Param("secret").String()
 
-	signator, err := client.NewApiSignator(email, secret)
+	signator, err := client.NewAPISignator(email, secret)
 	if err != nil {
 		panic(err)
 	}
@@ -214,7 +215,7 @@ func postReading(c cli.Command) {
 		panic(err)
 	}
 
-	signator, err := client.NewApiSignator(email, secret)
+	signator, err := client.NewAPISignator(email, secret)
 	if err != nil {
 		panic(err)
 	}
@@ -233,7 +234,7 @@ func postReading(c cli.Command) {
 	if number == 1 {
 		reading = models.Reading{
 			UserEmail:   email,
-			CoreId:      coreid,
+			CoreID:      coreid,
 			Posted:      postedTime,
 			Temperature: temperature,
 			Humidity:    humidity,
@@ -263,7 +264,7 @@ func rotateSecret(c cli.Command) {
 	email := c.Param("email").String()
 	secret := c.Param("secret").String()
 
-	signator, err := client.NewApiSignator(email, secret)
+	signator, err := client.NewAPISignator(email, secret)
 	if err != nil {
 		panic(err)
 	}

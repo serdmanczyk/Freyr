@@ -12,9 +12,13 @@ import (
 )
 
 var (
-	NoReading = errors.New("reading not present in request")
+	// ErrorNoReading is used when a reading is not present in a
+	// Post request.
+	ErrorNoReading = errors.New("reading not present in request")
 )
 
+// StringsEmpty returns true if any passed string arguments are zero valued
+// ("")
 func StringsEmpty(strs ...string) bool {
 	for _, s := range strs {
 		if s == "" {
@@ -31,7 +35,7 @@ func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 	dataStr := r.PostFormValue("data")
 
 	if StringsEmpty(email, coreid, published, dataStr) {
-		return models.Reading{}, NoReading
+		return models.Reading{}, ErrorNoReading
 	}
 
 	readingData := make(map[string]float64)
@@ -40,14 +44,14 @@ func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 		return models.Reading{}, err
 	}
 
-	posted, err := time.Parse(models.JsonTime, published)
+	posted, err := time.Parse(models.JSONTime, published)
 	if err != nil {
 		return models.Reading{}, err
 	}
 
 	reading := models.Reading{
 		UserEmail:   email,
-		CoreId:      coreid,
+		CoreID:      coreid,
 		Posted:      posted,
 		Temperature: readingData["temperature"],
 		Humidity:    readingData["humidity"],
@@ -58,6 +62,8 @@ func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 	return reading, nil
 }
 
+// PostReading returns a handler that accepts HTTP requests to store new
+// readings.
 func PostReading(s models.ReadingStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
@@ -81,6 +87,9 @@ func PostReading(s models.ReadingStore) apollo.Handler {
 }
 
 // TODO: add unit test
+
+// GetLatestReadings handles HTTP requests for the latest reading per core
+// owned by a particular user.
 func GetLatestReadings(s models.ReadingStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
@@ -106,6 +115,8 @@ func GetLatestReadings(s models.ReadingStore) apollo.Handler {
 	})
 }
 
+// DeleteReadings handles HTTP requests to delete readings for a user between
+// the specified dates.
 func DeleteReadings(s models.ReadingStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != "DELETE" {
@@ -129,6 +140,8 @@ func DeleteReadings(s models.ReadingStore) apollo.Handler {
 	})
 }
 
+// GetReadings handles HTTP requests for readings made by a particular core
+// between a start and end date.
 func GetReadings(s models.ReadingStore) apollo.Handler {
 	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {

@@ -34,7 +34,7 @@ func TestAcceptance(t *testing.T) {
 	// First test, test secret generation facilities
 	// generate a web token with the system secret just
 	// to get a secret for the user.
-	token, err := token.GenerateWebToken(token.JtwTokenGen(c.SecretKey), time.Now().Add(time.Hour), c.TestUser)
+	token, err := token.GenerateWebToken(token.JWTTokenGen(c.SecretKey), time.Now().Add(time.Hour), c.TestUser)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestAcceptance(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	apiSignator := client.ApiSignator{
+	apiSignator := client.APISignator{
 		UserEmail: c.TestUser,
 		Secret:    userSecret,
 	}
@@ -61,7 +61,7 @@ func TestAcceptance(t *testing.T) {
 		t.Fatal("Secret should have rotated, should have gotten unauthorized response")
 	}
 
-	apiSignator = client.ApiSignator{
+	apiSignator = client.APISignator{
 		UserEmail: c.TestUser,
 		Secret:    newUserSecret,
 	}
@@ -86,16 +86,16 @@ func TestAcceptance(t *testing.T) {
 
 	returnedLatest, err := client.GetLatest(apiSignator, c.Domain)
 	if err != nil {
-		t.Fatalf("Error retreiving latest readings: ", err.Error())
+		t.Fatalf("Error retreiving latest readings: %s", err.Error())
 	}
 
 	returned := make(map[string]models.Reading)
 	for _, reading := range returnedLatest {
-		returned[reading.CoreId] = reading
+		returned[reading.CoreID] = reading
 	}
 
 	for _, sentReading := range sentLatest {
-		returnedReading, ok := returned[sentReading.CoreId]
+		returnedReading, ok := returned[sentReading.CoreID]
 		if !ok {
 			t.Fatal("Core reading missing from results in latest call")
 		}
@@ -105,7 +105,7 @@ func TestAcceptance(t *testing.T) {
 	}
 
 	for _, returnedReading := range returned {
-		_, ok := sentLatest[returnedReading.CoreId]
+		_, ok := sentLatest[returnedReading.CoreID]
 		if !ok {
 			t.Fatal("Core returned from call to latest should not be present")
 		}
@@ -131,7 +131,7 @@ func TestAcceptance(t *testing.T) {
 
 	readings, err := client.GetReadings(apiSignator, c.Domain, coreId, startTime, postTime)
 	if err != nil {
-		t.Fatalf("Error calling get on readings by date span: ", err.Error())
+		t.Fatalf("Error calling get on readings by date span: %s", err.Error())
 	}
 
 	returnedReadings := make(map[time.Time]models.Reading, 100)
@@ -166,10 +166,10 @@ func TestAcceptance(t *testing.T) {
 
 	readings, err = client.GetReadings(apiSignator, c.Domain, coreId, startTime, postTime)
 	if err == nil {
-		t.Fatalf("Error calling get on readings by date span, should be 404; got: ", err.Error())
+		t.Fatalf("Error calling get on readings by date span, should be 404; got: %s", err.Error())
 	}
 
-	//if len(readings) != 0 {
-	//	t.Fatalf("Readings still remain after delete: %d %v", len(readings), readings)
-	//}
+	if len(readings) != 0 {
+		t.Fatalf("Readings still remain after delete: %d %v", len(readings), readings)
+	}
 }

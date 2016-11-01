@@ -1,4 +1,30 @@
-user nobody nogroup;
+package main
+
+var surtrEnv = `SURTR_DOMAIN=https://nginx
+SURTR_SECRET={{.Secret}}
+SURTR_USER={{.DemoUser}}
+ `
+
+var freyrEnv = `FREYR_DEMOUSER={{.DemoUser}}
+FREYR_DBHOST=postgres
+FREYR_DBPASSW={{.DbPass}}
+FREYR_DBUSER={{.DbUser}}
+FREYR_DOMAIN={{.DomainName}}
+FREYR_OAUTHID={{.OauthId}}
+FREYR_OAUTHSECRET={{.OauthSecret}}
+FREYR_SECRET={{.Secret}}
+`
+
+var postgresEnv = `POSTGRES_PASSWORD={{.DbPass}}
+POSTGRES_USER={{.DbUser}}
+`
+
+var demoUserSQL = `insert into
+   users (email, full_name, family_name, given_name, gender, locale, secret)
+   values ('{{.DemoUser}}', 'demo user', 'user', 'demo', 'androgenous', 'en', '');
+`
+
+var nginxConf = `user nobody nogroup;
 worker_processes auto;          # auto-detect number of logical CPU cores
 
 events {
@@ -25,13 +51,13 @@ http {
 
     server {
             listen         80;
-            server_name    "freyr.erdmanczyk.com";
+            server_name    "{{.DomainName}}";
             return         301 https://$server_name$request_uri;
     }
 
     server {
         listen              443 ssl;
-        server_name         "freyr.erdmanczyk.com";
+        server_name         "{{.DomainName}}";
         ssl_certificate     fullchain.cert.pem;
         ssl_certificate_key privkey.pem;
         ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
@@ -51,3 +77,4 @@ http {
         }
     }
 }
+`

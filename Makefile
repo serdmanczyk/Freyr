@@ -25,7 +25,6 @@ surtr:
 webpack:
 	cd nginx/static && PROD_ENV=1 webpack
 
-
 rundev:
 	docker-compose -f docker-compose.debug.yml -p dev build
 	docker-compose -f docker-compose.debug.yml -p dev up --force-recreate
@@ -35,6 +34,9 @@ buildstatic:
 
 runstatic:
 	docker-compose up -d --build
+
+downstatic:
+	docker-compose down
 
 integration:
 	docker-compose -p integration down
@@ -46,4 +48,5 @@ acceptance:
 	docker-compose -f docker-compose.acceptance.yml -p acceptance build
 	docker-compose -f docker-compose.acceptance.yml -p acceptance up --force-recreate --abort-on-container-exit
 
-test: freyr surtr integration acceptance
+buildgo:  freyr surtr
+test:  integration acceptance

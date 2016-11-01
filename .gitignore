@@ -3,9 +3,12 @@
 *.pem
 .env*
 .idea/
-secrets.tar
-nginx/static/node_modules
-particle/
+cmd/surtr/surtr
 freyr
 freyr.iml
-cmd/surtr/surtr
+freyrinit/freyrinit
+nginx/conf/nginx.conf
+nginx/static/node_modules
+particle/
+postgres/demo_user.sql
+secrets.tar

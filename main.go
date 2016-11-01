@@ -32,6 +32,7 @@ type Config struct {
 	DBHost            string `flag:"dbhost" env:"FREYR_DBHOST"`
 	DBUser            string `flag:"dbuser" env:"FREYR_DBUSER"`
 	DBPassword        string `flag:"dbpassw" env:"FREYR_DBPASSW"`
+	DemoUser          string `flag:"demouser" env:"FREYR_DEMOUSER"`
 }
 
 func main() {
@@ -75,7 +76,7 @@ func main() {
 	mux.Handle("/authorize", oauth.HandleAuthorize(googleOauth, tokenSource))
 	mux.Handle("/oauth2callback", oauth.HandleOAuth2Callback(googleOauth, tokenSource, dbConn))
 	mux.Handle("/logout", oauth.LogOut())
-	mux.Handle("/demo", oauth.SetDemoUser(tokenSource, dbConn))
+	mux.Handle("/demo", oauth.SetDemoUser(c.DemoUser, tokenSource, dbConn))
 
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())

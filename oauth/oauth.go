@@ -124,10 +124,10 @@ func HandleOAuth2Callback(o Handler, t token.Source, userStore models.UserStore)
 // SetDemoUser accepts an HTTP request and provides a signed a web access JWT
 // to allow the current site user to view example data in the demo user's
 // account.
-func SetDemoUser(t token.Source, userStore models.UserStore) http.Handler {
+func SetDemoUser(userName string, t token.Source, userStore models.UserStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		user, err := userStore.GetUser("noone@nothing.com")
+		user, err := userStore.GetUser(userName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

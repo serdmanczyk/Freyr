@@ -21,3 +21,6 @@ create table if not exists readings (
     battery real,
     primary key (useremail, coreid, posted)
 );
+
+insert into users (email, full_name, family_name, given_name, gender, locale, secret) values
+('noone@nothing.com', 'demo user', 'user', 'demo', 'androgenous', 'en', '');

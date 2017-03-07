@@ -71,12 +71,12 @@ Instead, I created a tool to manage config.
 After you've setup your $GOPATH, etc. take the following steps:
 
 1. Clone this repo to `$GOPATH/src/github.com/serdmanczyk/freyr`
-2. cd to `initfreyr/` and run `go build`
-3. `./initfreyr` takes some flags for config values, run with `-h` to see them.  With the flags provided it will automatically generate needed config files, including the nginx configuration.
+2. cd to `cmd/init_freyr/` in the project and run `go build`
+3. `./init_freyr` takes some flags for config values, run with `-h` to see them.  With the flags provided it will automatically generate needed config files, including the nginx configuration.
 
 ## Generate a server key/certificate
 
-1. Run `./gencert.sh` in `initfreyr/` to generate a key/certificate.  It uses openssl, so you will need that installed.
+1. Run `./gencert.sh` in `cmd/init_freyr/` to generate a key/certificate.  It uses openssl, so you will need that installed.
  
 OpenSSL will prompt you for some values, you can goof around on these if you want.  For good practice make sure `Common Name (e.g. server FQDN or YOUR name)` matches the domain name and/or ip (e.g. docker VM ip) you will use to connect to your server.
 

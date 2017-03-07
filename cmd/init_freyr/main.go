@@ -11,8 +11,9 @@ import (
 )
 
 var (
+	projectDir  = flag.String("projectDir", "./", "absolute or relative path to project directory")
 	domainName  = flag.String("domainName", "localhost", "domain name for running website")
-	oauthId     = flag.String("oauthId", "", "Google Oauth Id")
+	oauthID     = flag.String("oauthId", "", "Google Oauth Id")
 	oauthSecret = flag.String("oauthSecret", "", "Google Oauth Secret")
 	demoUser    = flag.String("demouser", "noone@nothing.com", "Demo user account email")
 	dbUser      = flag.String("dbuser", "fakeuser", "Postgres database username")
@@ -21,9 +22,10 @@ var (
 	clean       = flag.Bool("clean", false, "Delete existing .env files")
 )
 
-type TemplateConfig struct {
+type templateConfig struct {
+	ProjectDir  string
 	DomainName  string
-	OauthId     string
+	OauthID     string
 	OauthSecret string
 	DemoUser    string
 	DbUser      string
@@ -44,9 +46,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	c := TemplateConfig{
+	c := templateConfig{
+		ProjectDir:  *projectDir,
 		DomainName:  *domainName,
-		OauthId:     *oauthId,
+		OauthID:     *oauthID,
 		OauthSecret: *oauthSecret,
 		DemoUser:    *demoUser,
 		DbUser:      *dbUser,
@@ -54,20 +57,20 @@ func main() {
 		Secret:      secret.Encode(),
 	}
 
-	if Empty(&c) {
-		log.Fatal("Must defined a value for all non-defaulted string flags; run 'freyrinit -h' for more info")
+	if empty(&c) && !*clean {
+		log.Fatal("Must define a value for all non-defaulted string flags; run 'freyrinit -h' for more info")
 	}
 
-	dir, err := os.Getwd()
+	pdir, err := filepath.Abs(c.ProjectDir)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Error getting absolute directory of project path: %v", err)
+		return
 	}
 
-	if !isProjectDir(dir) {
-		log.Fatal("This must only be run in freyr/freyrinit directory")
+	if filepath.Base(pdir) != "freyr" {
+		log.Fatal("Project path doesn't appear to be freyr directory")
+		return
 	}
-
-	projectdir := filepath.Clean(filepath.Join(dir, ".."))
 
 	for _, f := range []envFile{
 		{".env", freyrEnv},
@@ -76,7 +79,8 @@ func main() {
 		{"cmd/surtr/.env", surtrEnv},
 		{"nginx/conf/nginx.conf", nginxConf},
 	} {
-		path := filepath.Join(projectdir, f.name)
+		path := filepath.Join(pdir, f.name)
+		log.Println(path)
 
 		if *clean {
 			os.Remove(path)
@@ -91,7 +95,7 @@ func main() {
 	}
 }
 
-func writeTemplateFile(path, templ string, c TemplateConfig) {
+func writeTemplateFile(path, templ string, c templateConfig) {
 	tmpl, err := template.New(path).Parse(templ)
 	if err != nil {
 		panic(err)
@@ -106,21 +110,7 @@ func writeTemplateFile(path, templ string, c TemplateConfig) {
 	tmpl.Execute(f, c)
 }
 
-func isProjectDir(path string) bool {
-	var dir string
-	for _, expected := range []string{
-		"freyrinit", "freyr",
-	} {
-		path = filepath.Clean(path)
-		path, dir = filepath.Split(path)
-		if dir != expected {
-			return false
-		}
-	}
-	return true
-}
-
-func Empty(s interface{}) bool {
+func empty(s interface{}) bool {
 	val := reflect.ValueOf(s).Elem()
 
 	for i := 0; i < val.NumField(); i++ {

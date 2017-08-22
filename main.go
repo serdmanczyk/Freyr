@@ -12,6 +12,7 @@ import (
 	"github.com/codegangsta/negroni"
 	"github.com/cyclopsci/apollo"
 	_ "github.com/lib/pq"
+	"github.com/serdmanczyk/bifrost"
 	"github.com/serdmanczyk/freyr/database"
 	"github.com/serdmanczyk/freyr/envflags"
 	"github.com/serdmanczyk/freyr/middleware"
@@ -21,6 +22,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 // Config represent the basic configuration needed by Freyr to operate.
@@ -53,6 +55,11 @@ func main() {
 		log.Fatalf("Error initializing database conn: %s", err)
 	}
 
+	workerDispatcher := bifrost.NewWorkerDispatcher(
+		bifrost.Workers(10),
+		bifrost.JobExpiry(time.Minute*60),
+	)
+
 	webAuth := middleware.NewWebAuthorizer(tokenSource)
 	apiAuth := middleware.NewAPIAuthorizer(dbConn)
 	deviceAuth := middleware.NewDeviceAuthorizer(dbConn)
@@ -62,25 +69,35 @@ func main() {
 	webAPIAuthed := apollo.New(middleware.Authorize(webAuth, apiAuth))
 	apiDeviceAuthed := apollo.New(middleware.Authorize(apiAuth, deviceAuth))
 
-	mux := http.NewServeMux()
-	mux.Handle("/user", webAPIAuthed.Then(routes.User(dbConn)))
-	mux.Handle("/secret", webAuthed.Then(routes.GenerateSecret(dbConn)))
-	mux.Handle("/latest", webAPIAuthed.Then(routes.GetLatestReadings(dbConn)))
-	mux.Handle("/readings", webAPIAuthed.Then(routes.GetReadings(dbConn)))
+	rootMux := http.NewServeMux()
+	rootMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/index.html")
+	})
+	rootMux.Handle("/static/", http.FileServer(http.Dir("./")))
 
-	mux.Handle("/reading", apiDeviceAuthed.Then(routes.PostReading(dbConn)))
+	apiMux := http.NewServeMux()
 
-	mux.Handle("/delete_readings", apiAuthed.Then(routes.DeleteReadings(dbConn)))
-	mux.Handle("/rotate_secret", apiAuthed.Then(routes.RotateSecret(dbConn)))
+	rootMux.Handle("/api/", http.StripPrefix("/api", apiMux))
 
-	mux.Handle("/authorize", oauth.HandleAuthorize(googleOauth, tokenSource))
-	mux.Handle("/oauth2callback", oauth.HandleOAuth2Callback(googleOauth, tokenSource, dbConn))
-	mux.Handle("/logout", oauth.LogOut())
-	mux.Handle("/demo", oauth.SetDemoUser(c.DemoUser, tokenSource, dbConn))
+	apiMux.Handle("/user", webAPIAuthed.Then(routes.User(dbConn)))
+	apiMux.Handle("/secret", webAuthed.Then(routes.GenerateSecret(dbConn)))
+	apiMux.Handle("/latest", webAPIAuthed.Then(routes.GetLatestReadings(dbConn)))
+	apiMux.Handle("/readings", webAPIAuthed.Then(routes.Readings(workerDispatcher, dbConn)))
+
+	apiMux.Handle("/reading", apiDeviceAuthed.Then(routes.PostReading(dbConn)))
+
+	apiMux.Handle("/job", apiAuthed.Then(routes.Jobs(workerDispatcher)))
+	apiMux.Handle("/delete_readings", apiAuthed.Then(routes.DeleteReadings(dbConn)))
+	apiMux.Handle("/rotate_secret", apiAuthed.Then(routes.RotateSecret(dbConn)))
+
+	apiMux.Handle("/authorize", oauth.HandleAuthorize(googleOauth, tokenSource))
+	apiMux.Handle("/oauth2callback", oauth.HandleOAuth2Callback(googleOauth, tokenSource, dbConn))
+	apiMux.Handle("/logout", oauth.LogOut())
+	apiMux.Handle("/demo", oauth.SetDemoUser(c.DemoUser, tokenSource, dbConn))
 
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())
 	n.Use(negroni.NewLogger())
-	n.UseHandler(mux)
-	n.Run(":8080")
+	n.UseHandler(rootMux)
+	n.Run(":80")
 }

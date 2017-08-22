@@ -3,12 +3,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"github.com/serdmanczyk/freyr/client"
 	"github.com/serdmanczyk/freyr/envflags"
 	"github.com/serdmanczyk/freyr/fake"
 	"github.com/serdmanczyk/freyr/models"
 	"github.com/serdmanczyk/freyr/token"
+	"log"
 	"os"
 	"testing"
 	"time"
@@ -21,6 +23,13 @@ type Config struct {
 }
 
 func TestAcceptance(t *testing.T) {
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		t.Log(buf.String())
+		log.SetOutput(os.Stderr)
+	}()
+
 	var c Config
 
 	envflags.SetFlags(&c)
@@ -30,6 +39,8 @@ func TestAcceptance(t *testing.T) {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+
+	time.Sleep(time.Second)
 
 	// First test, test secret generation facilities
 	// generate a web token with the system secret just
@@ -116,10 +127,11 @@ func TestAcceptance(t *testing.T) {
 	// correct readings.
 	startTime = time.Now().In(time.UTC).Round(time.Second)
 	postTime := startTime
+	const numReadings = 100
 
-	sentReadings := make(map[time.Time]models.Reading, 100)
+	sentReadings := make(map[time.Time]models.Reading, numReadings)
 	coreId := "890890890890"
-	for i := 0; i < 100; i++ {
+	for i := 0; i < numReadings; i++ {
 		reading := fake.RandReading(c.TestUser, coreId, postTime)
 		err = client.PostReading(apiSignator, c.Domain, reading)
 		if err != nil {
@@ -134,7 +146,7 @@ func TestAcceptance(t *testing.T) {
 		t.Fatalf("Error calling get on readings by date span: %s", err.Error())
 	}
 
-	returnedReadings := make(map[time.Time]models.Reading, 100)
+	returnedReadings := make(map[time.Time]models.Reading, numReadings)
 	for _, reading := range readings {
 		if _, ok := returnedReadings[reading.Posted]; ok {
 			t.Fatal("Multiple readings for same date returned; readings should be unique per core per date")
@@ -164,12 +176,30 @@ func TestAcceptance(t *testing.T) {
 		t.Fatalf("Error deleting readings: %s", err.Error())
 	}
 
-	readings, err = client.GetReadings(apiSignator, c.Domain, coreId, startTime, postTime)
-	if err == nil {
-		t.Fatalf("Error calling get on readings by date span, should be 404; got: %s", err.Error())
+	// Re-use readings we sent earlier for PostReadings call
+	var readingsList []models.Reading
+	for _, reading := range sentReadings {
+		readingsList = append(readingsList, reading)
 	}
 
-	if len(readings) != 0 {
-		t.Fatalf("Readings still remain after delete: %d %v", len(readings), readings)
+	jobID, err := client.PostReadings(apiSignator, c.Domain, readingsList)
+	if err != nil {
+		t.Fatalf("Error posting multiple readings: %s", err.Error())
+	}
+
+	err = client.WaitForJob(apiSignator, c.Domain, jobID, time.Minute)
+	if err != nil {
+		t.Fatalf("Failed waiting for job %d: %s", jobID, err.Error())
+	}
+
+	readings, err = client.GetReadings(apiSignator, c.Domain, coreId, startTime, postTime)
+	if err != nil {
+		t.Fatalf("Error calling get on readings by date span: %s", err.Error())
+	}
+
+	for _, reading := range readings {
+		if _, ok := sentReadings[reading.Posted]; !ok {
+			t.Fatal("Reading was not added in post multiple call: %v", reading)
+		}
 	}
 }

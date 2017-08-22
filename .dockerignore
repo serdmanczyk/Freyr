@@ -1,4 +1,3 @@
-nginx
+static/node_modules
 postgres
-
 .env

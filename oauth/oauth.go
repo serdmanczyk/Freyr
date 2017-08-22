@@ -50,10 +50,10 @@ func setUserCookie(w http.ResponseWriter, t token.Source, u models.User) error {
 		return err
 	}
 	cookie := &http.Cookie{
-		Name:     CookieName,
-		Value:    token,
-		MaxAge:   int(expiry.Unix() - time.Now().Unix()),
-		Secure:   true,
+		Name:   CookieName,
+		Value:  token,
+		MaxAge: int(expiry.Unix() - time.Now().Unix()),
+		// Secure:   true,
 		HttpOnly: true,
 	}
 

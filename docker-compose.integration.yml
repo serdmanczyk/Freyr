@@ -1,24 +1,6 @@
-version: '2'
+version: '3.2'
 services:
-  freyr:
-    restart: always
-    image: golang
-    volumes:
-      - ./:/go/src/github.com/serdmanczyk/freyr/
-    working_dir: /go/src/github.com/serdmanczyk/freyr/
-    command: go test ./... -tags=integration
-    links:
-      - postgres
-    depends_on:
-      - postgres
-    environment:
-      GOPATH: /go/src/github.com/serdmanczyk/freyr/vendor/:/go
   postgres:
-    build: 
-      context: ./postgres/
-    image: postgres:9.4
-    volumes:
-      - ./postgres/:/docker-entrypoint-initdb.d/
     environment:
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpassword

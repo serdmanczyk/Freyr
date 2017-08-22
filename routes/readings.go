@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/cyclopsci/apollo"
+	"github.com/serdmanczyk/bifrost"
 	"github.com/serdmanczyk/freyr/models"
 	"golang.org/x/net/context"
-	"io"
+	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -28,7 +30,8 @@ func StringsEmpty(strs ...string) bool {
 	return false
 }
 
-func loadReading(ctx context.Context, r *http.Request) (models.Reading, error) {
+// loads a reading sent via a Spark(Particle) Core
+func loadCoreReading(ctx context.Context, r *http.Request) (models.Reading, error) {
 	email := getEmail(ctx)
 	coreid := r.PostFormValue("coreid")
 	published := r.PostFormValue("published_at")
@@ -71,7 +74,7 @@ func PostReading(s models.ReadingStore) apollo.Handler {
 			return
 		}
 
-		reading, err := loadReading(ctx, r)
+		reading, err := loadCoreReading(ctx, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -86,7 +89,41 @@ func PostReading(s models.ReadingStore) apollo.Handler {
 	})
 }
 
-// TODO: add unit test
+// PostReadings returns a handler that accepts HTTP requests to store multiple
+// readings
+func PostReadings(j bifrost.JobDispatcher, s models.ReadingStore) apollo.Handler {
+	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		}
+
+		var readings []models.Reading
+		if err := json.NewDecoder(r.Body).Decode(&readings); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var jobID uint
+		postReadingsFunc := func() (e error) {
+			for _, reading := range readings {
+				if err := s.StoreReading(reading); err != nil {
+					// TODO: return aggregate error instead of most recent
+					e = err
+				}
+			}
+			log.Printf("Completed Job %d\n", jobID)
+			return
+		}
+
+		job := j.QueueFunc(postReadingsFunc)
+		jobID = job.ID()
+		log.Printf("Queued Job %d\n", jobID)
+		jobIdStr := strconv.FormatUint(uint64(jobID), 10)
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte(jobIdStr))
+	})
+}
 
 // GetLatestReadings handles HTTP requests for the latest reading per core
 // owned by a particular user.
@@ -104,14 +141,32 @@ func GetLatestReadings(s models.ReadingStore) apollo.Handler {
 			return
 		}
 
-		bytes, err := json.Marshal(readings)
+		w.Header().Add("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(readings)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	})
+}
 
-		w.Header().Add("Content-Type", "application/json")
-		io.WriteString(w, string(bytes))
+// Readings is the generalized route for the /readings path
+func Readings(j bifrost.JobDispatcher, s models.ReadingStore) apollo.Handler {
+	getHandler := GetReadings(s)
+	postHandler := PostReadings(j, s)
+
+	return apollo.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			getHandler.ServeHTTP(ctx, w, r)
+			return
+		}
+
+		if r.Method == "POST" {
+			postHandler.ServeHTTP(ctx, w, r)
+			return
+		}
+
+		http.Error(w, "", http.StatusNotFound)
 	})
 }
 
@@ -166,14 +221,12 @@ func GetReadings(s models.ReadingStore) apollo.Handler {
 			return
 		}
 
-		bytes, err := json.Marshal(readings)
+		w.Header().Add("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(readings)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		w.Header().Add("Content-Type", "application/json")
-		io.WriteString(w, string(bytes))
 	})
 }
 

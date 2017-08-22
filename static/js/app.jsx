@@ -1,15 +1,15 @@
-import React from 'react';
+import { React } from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router';
-import $ from 'jquery';
-import d3 from 'd3';
-import ReactFauxDOM from 'react-faux-dom';
-import DateRangePicker from 'react-bootstrap-daterangepicker';
-import moment from 'moment';
-import _ from 'underscore'
+import { axios } from 'axios';
+import { d3 } from 'd3';
+import { ReactFauxDOM } from 'react-faux-dom';
+// import { DateRangePicker } from 'react-bootstrap-daterangepicker';
+import { moment } from 'moment';
+import { _ } from 'underscore'
 import { Button, Glyphicon } from 'react-bootstrap';
 
-var ReadingsTable = React.createClass({
+class ReadingsTable extends React.Component{
   clickedCoreRow(key) {
     return (e) => {
       e.preventDefault();
@@ -17,7 +17,7 @@ var ReadingsTable = React.createClass({
         browserHistory.push('/readings/' + key);
       }
     };
-  },
+  }
   render() {
     var listItems = this.props.readings.map(reading => {
       return (
@@ -52,9 +52,9 @@ var ReadingsTable = React.createClass({
       </table>
     )
   }
-});
+}
 
-var ReadingsChart = React.createClass({
+class ReadingsChart extends React.Component{
   getInitialState() {
     var sod = moment().startOf('day');
     var eod = moment().endOf('day');
@@ -76,50 +76,49 @@ var ReadingsChart = React.createClass({
         windowInnerWidth: window.innerWidth,
         windowInnerHeight: window.innerHeight,
       };
-  },
+  }
   componentDidMount() {
     window.addEventListener("resize", this.updateDimensions);
     this.fetchReadings(this.state.startDate, this.state.endDate)
-  },
+  }
   updateDimensions() {
     this.setState({
       windowInnerWidth: window.innerWidth,
       windowInnerHeight: window.innerHeight,
     });
-  },
+  }
   handleTypeChange(e) {
     this.setState({
       readingType: e.target.value,
     });
-  },
+  }
   componentWillUnmount() {
     window.removeEventListener("resize", this.updateDimensions);
-  },
+  }
   fetchReadings(startDate, endDate) {
-    $.get('/api/readings', {
+    axios.get('/api/readings', {
+      params: {
         'start': startDate.format(),
         'end': endDate.format(),
         'core': this.props.params.coreid
-      },
-      'json')
-        .done(data => {
-          this.setState({
-            startDate: startDate,
-            endDate: endDate,
-            readings: _.sortBy(data, 'posted')
-          });
-        })
-        .fail(err => {
-          this.setState({
-            readings: [],
-          });
-          console.log(err);
-          // this.setState({error: err});
-        });
-  },
+      }
+    }).then(data => {
+      this.setState({
+        startDate: startDate,
+        endDate: endDate,
+        readings: _.sortBy(data, 'posted')
+      });
+    }).catch(err => {
+      this.setState({
+        readings: [],
+      });
+      console.log(err);
+      // this.setState({error: err});
+    });
+  }
   onApply(event, picker) {
     this.fetchReadings(picker.startDate, picker.endDate);
-  },
+  }
   render() {
     var data = this.state.readings;
     var type = this.state.readingType;
@@ -136,27 +135,27 @@ var ReadingsChart = React.createClass({
     height = height - margin.top - margin.bottom
 
     var x = d3.time.scale()
-    .range([0, width])
+      .range([0, width])
 
     var y = d3.scale.linear()
-    .range([height, 0])
+      .range([height, 0])
 
     var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient('bottom')
-    .ticks(7)
+      .scale(x)
+      .orient('bottom')
+      .ticks(7)
 
     var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient('left')
+      .scale(y)
+      .orient('left')
 
     data.forEach(function (d) {
       d.timestamp = moment(d.posted)
     })
 
     var line = d3.svg.line()
-    .x(function (d) { return x(d.timestamp) })
-    .y(function (d) { return y(d[type]) })
+      .x(function (d) { return x(d.timestamp) })
+      .y(function (d) { return y(d[type]) })
 
 
     var node = ReactFauxDOM.createElement('div')
@@ -199,19 +198,20 @@ var ReadingsChart = React.createClass({
       label = start;
     }
 
+// 
     return (
       <div>
-          <DateRangePicker startDate={this.state.startDate} endDate={this.state.endDate} ranges={this.state.ranges} onApply={this.onApply}>
-            <Button className="selected-date-range-btn">
-              <div className="pull-left"><Glyphicon glyph="calendar" /></div>
-              <div className="pull-right">
-                <span>
-                  {label}
-                </span>
-                <span className="caret"></span>
-              </div>
-            </Button>
-          </DateRangePicker>
+          // <DateRangePicker startDate={this.state.startDate} endDate={this.state.endDate} ranges={this.state.ranges} onApply={this.onApply}>
+          //   <Button className="selected-date-range-btn">
+          //     <div className="pull-left"><Glyphicon glyph="calendar" /></div>
+          //     <div className="pull-right">
+          //       <span>
+          //         {label}
+          //       </span>
+          //       <span className="caret"></span>
+          //     </div>
+          //   </Button>
+          // </DateRangePicker>
           <select className="btn btn-default btn-sm" onChange={this.handleTypeChange}>
             <option value="temperature">Temperature</option>
             <option value="humidity">Humidity</option>
@@ -223,17 +223,17 @@ var ReadingsChart = React.createClass({
       </div>
     );
     // return <span />
-  },
-});
+  }
+}
 
-var Latest = React.createClass({
+class Latest extends React.Component{
   getInitialState() {
       return {
         latest:[]
       };
-  },
+  }
   componentDidMount() {
-    $.get('/api/latest', null, 'json')
+    axios.get('/api/latest')
       .done(data => {
         this.setState({
           latest: data,
@@ -242,7 +242,7 @@ var Latest = React.createClass({
       .fail(() => {
         this.setState({error: err});
       });
-  },
+  }
   render() {
     if (this.state.latest) {    
       return (<ReadingsTable readings={this.state.latest} nav={true} />)
@@ -255,21 +255,21 @@ var Latest = React.createClass({
       );
     }
   }
-});
+}
 
-var Main = React.createClass({
+class Main extends React.Component{
   getInitialState() {
     return {};
-  },
+  }
   componentDidMount() {
-    $.get('/api/user', null, 'json')
-      .done(data => {
+    axios.get('/api/user')
+      .then(data => {
         browserHistory.push('latest');
       })
-      .fail(() => {
+      .catch(() => {
         this.setState({loggedin: false});
       });
-  },
+  }
   render() {
       if (this.state.loggedin === false) {
         return (
@@ -283,7 +283,7 @@ var Main = React.createClass({
         return (<img src="img/loading.svg" />)
       }
   }
-});
+}
 
 render((
   <Router history={browserHistory} locales={['en-us']}>

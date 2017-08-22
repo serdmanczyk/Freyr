@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/serdmanczyk/freyr",
-	"GoVersion": "go1.7",
+	"GoVersion": "go1.8",
 	"Deps": [
 		{
 			"ImportPath": "github.com/codegangsta/negroni",
@@ -24,6 +24,10 @@
 			"ImportPath": "github.com/lib/pq",
 			"Comment": "go1.0-cutoff-74-g8ad2b29",
 			"Rev": "8ad2b298cadd691a77015666a5372eae5dbfac8f"
+		},
+		{
+			"ImportPath": "github.com/serdmanczyk/bifrost",
+			"Rev": "788328ff0896e6050ba35c2bfaa2c5fdfd30e259"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

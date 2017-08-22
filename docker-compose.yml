@@ -1,26 +1,12 @@
-version: '2'
+version: '3.2'
 services:
-  nginx:
-    image: serdmanczyk/freyrnginx
-    build: 
-      context: ./nginx/
-    ports:
-      - "80:80"
-      - "443:443"
-    links:
-      - freyr
   freyr:
-    restart: always
-    image: serdmanczyk/freyr
-    build: 
-      context: .
     env_file: .env
     links:
       - postgres
     depends_on:
       - postgres
   postgres:
-    restart: always
     build: 
       context: ./postgres/
     image: serdmanczyk/freyrpostgres

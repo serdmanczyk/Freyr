@@ -29,7 +29,7 @@ func main() {
 	})
 
 	post := surtr.DefineSubCommand("post", "post commands", func(c cli.Command) {
-		c.ErrPrintln("Define what you want to post [reading]")
+		c.ErrPrintln("Define what you want to post [reading,readings]")
 	})
 
 	delete := surtr.DefineSubCommand("delete", "deletecommands", func(c cli.Command) {
@@ -66,6 +66,9 @@ func main() {
 	pr.AliasFlag('b', "battery")
 	pr.AliasFlag('n', "number")
 	pr.AliasFlag('s', "step")
+
+	prs := post.DefineSubCommand("readings", "post a reading", postReadings, "domain", "secret", "email", "filepath")
+	prs.DefineStringFlag("timeout", time.Minute.String(), "Time to wait for job to complete")
 
 	surtr.Start()
 }
@@ -275,4 +278,42 @@ func rotateSecret(c cli.Command) {
 	}
 
 	c.Println(newsecret.Encode())
+}
+
+func postReadings(c cli.Command) {
+	domain := c.Param("domain").String()
+	email := c.Param("email").String()
+	secret := c.Param("secret").String()
+	filepath := c.Param("filepath").String()
+	timeoutStr := c.Flag("timeout").String()
+
+	timeout, err := time.ParseDuration(timeoutStr)
+	if err != nil {
+		panic(err)
+	}
+
+	readingsFile, err := os.Open(filepath)
+	if err != nil {
+		panic(err)
+	}
+
+	var readings []models.Reading
+	json.NewDecoder(readingsFile).Decode(&readings)
+	if err != nil {
+		panic(err)
+	}
+
+	signator, err := client.NewAPISignator(email, secret)
+	if err != nil {
+		panic(err)
+	}
+	jobID, err := client.PostReadings(signator, domain, readings)
+	if err != nil {
+		panic(err)
+	}
+
+	err = client.WaitForJob(signator, domain, jobID, timeout)
+	if err != nil {
+		panic(err)
+	}
 }

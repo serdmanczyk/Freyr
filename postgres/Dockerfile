@@ -1,4 +1,3 @@
-FROM kiasaki/alpine-postgres
-# postgres:9.4
+FROM postgres
 
 COPY ./*.sql  /docker-entrypoint-initdb.d/

@@ -8,11 +8,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/serdmanczyk/bifrost"
 	"github.com/serdmanczyk/freyr/middleware"
 	"github.com/serdmanczyk/freyr/models"
 	"github.com/serdmanczyk/freyr/oauth"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -90,6 +92,11 @@ func (s *DeviceSignator) Sign(r *http.Request) {
 	r.Header.Add(middleware.AuthUserHeader, s.UserEmail)
 }
 
+func responseError(resp *http.Response) error {
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	return fmt.Errorf("Http Error %d: %s", resp.StatusCode, string(bodyBytes))
+}
+
 // GetLatest gets the latest readings, per device, for a user.
 func GetLatest(s Signator, domain string) ([]models.Reading, error) {
 	var readings []models.Reading
@@ -107,7 +114,7 @@ func GetLatest(s Signator, domain string) ([]models.Reading, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return readings, fmt.Errorf("Http Error: %d", resp.StatusCode)
+		return readings, responseError(resp)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&readings)
@@ -141,7 +148,7 @@ func GetReadings(s Signator, domain, coreid string, start, end time.Time) ([]mod
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return readings, fmt.Errorf("Http Error: %d", resp.StatusCode)
+		return readings, responseError(resp)
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&readings)
@@ -173,7 +180,7 @@ func DeleteReadings(s Signator, domain, coreid string, start, end time.Time) err
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("Http Error: %d", resp.StatusCode)
+		return responseError(resp)
 	}
 
 	return nil
@@ -198,28 +205,51 @@ func PostReading(s Signator, domain string, reading models.Reading) error {
 	req.ContentLength = int64(len(formStr))
 	s.Sign(req)
 
-	//bytes, err := httputil.DumpRequest(req, true)
-	//if err != nil {
-	//	return err
-	//}
-	//fmt.Println(string(bytes))
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	bytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
 	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("Http Error %d: %s", resp.StatusCode, string(bytes))
+		return responseError(resp)
 	}
 
 	return nil
+}
+
+// PostReadings posts a list of readings
+func PostReadings(s Signator, domain string, readings []models.Reading) (string, error) {
+	reqBody := new(bytes.Buffer)
+	err := json.NewEncoder(reqBody).Encode(&readings)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", domain+"/api/readings", reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	s.Sign(req)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusAccepted {
+		return "", responseError(resp)
+	}
+
+	jobIdBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(jobIdBytes), nil
 }
 
 // GetSecret requests the system to generate a new secret for the user.
@@ -237,7 +267,7 @@ func GetSecret(s Signator, domain string) (models.Secret, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return models.Secret([]byte{}), fmt.Errorf("Http Error: %d", resp.StatusCode)
+		return models.Secret([]byte{}), responseError(resp)
 	}
 
 	var dest bytes.Buffer
@@ -266,7 +296,7 @@ func RotateSecret(s Signator, domain string) (models.Secret, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nilSecret, fmt.Errorf("Http Error: %d", resp.StatusCode)
+		return nilSecret, responseError(resp)
 	}
 
 	var dest bytes.Buffer
@@ -278,4 +308,63 @@ func RotateSecret(s Signator, domain string) (models.Secret, error) {
 	}
 
 	return models.Secret(dest.Bytes()), nil
+}
+
+func GetJobStatus(s Signator, domain, jobID string) (*bifrost.JobStatus, error) {
+	req, err := http.NewRequest("GET", domain+"/api/job?jobID="+jobID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	s.Sign(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, responseError(resp)
+	}
+
+	jobStatus := new(bifrost.JobStatus)
+	err = json.NewDecoder(resp.Body).Decode(jobStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	return jobStatus, nil
+}
+
+func WaitForJob(s Signator, domain, jobID string, timeout time.Duration) error {
+	done := make(chan bool)
+	failure := make(chan error)
+	start := time.Now()
+	deadline := start.Add(timeout)
+	go func() {
+		for {
+			status, err := GetJobStatus(s, domain, jobID)
+			if err != nil {
+				failure <- err
+				return
+			}
+			if status.Complete {
+				done <- true
+				return
+			}
+			if time.Now().After(deadline) {
+				return
+			}
+			<-time.After(time.Millisecond * 100)
+		}
+	}()
+	select {
+	case <-done:
+		log.Printf("Waited %s on Job %s", time.Now().Sub(start), jobID)
+		return nil
+	case err := <-failure:
+		return err
+	case <-time.After(timeout):
+		return fmt.Errorf("timed out waiting for job to complete")
+	}
 }

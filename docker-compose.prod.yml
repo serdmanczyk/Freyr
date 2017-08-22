@@ -1,0 +1,25 @@
+version: '3.2'
+services:
+  freyr:
+    image: serdmanczyk/freyr
+    networks:
+      - reverseproxy
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=freyr"
+      - "traefik.frontend.rule=Host:freyr.erdmanczyk.com"
+      - "traefik.docker.network=reverseproxy_reverseproxy"
+    build: 
+      context: .
+  postgres:
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+networks:
+  reverseproxy:
+    external:
+      name: reverseproxy_reverseproxy
+
+volumes: 
+  pgdata:
